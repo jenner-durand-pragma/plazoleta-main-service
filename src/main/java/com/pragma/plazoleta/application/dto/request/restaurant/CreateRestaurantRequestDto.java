@@ -20,7 +20,7 @@ import javax.validation.constraints.Positive;
 public class CreateRestaurantRequestDto {
 
     @NotBlank(message = "Name is required")
-    @Pattern(regexp = "^(?=.*\\p{L})[\\p{L}0-91\\s]+$", message = "Restaurant name cannot contain only numbers")
+    @Pattern(regexp = "^(?=.*\\p{L})[\\p{L}0-9\\s]+$", message = "Restaurant name cannot contain only numbers")
     @Schema(
             description = "Restaurant display name",
             example = "Pizza Place"
