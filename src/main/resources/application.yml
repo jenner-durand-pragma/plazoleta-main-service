@@ -1,0 +1,39 @@
+server:
+  port: ${SERVER_PORT:8092}
+
+spring:
+  application:
+    name: plazoleta-main-service
+  profiles:
+    active: ${SPRING_PROFILES_ACTIVE:dev}
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/db_plazoleta_main?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
+    username: ${SPRING_DATASOURCE_USERNAME:plazoleta}
+    password: ${SPRING_DATASOURCE_PASSWORD:plazoletapass}
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: ${JPA_SHOW_SQL:true}
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+        format_sql: true
+
+security:
+  jwt:
+    secret: ${SECURITY_JWT_SECRET:c2VjcmV0by1zdXBlci1sYXJnby1kZS0yNTYtYml0cy1taW5pbW8tcGFyYS1obWFjLXNoYTI1Ng==}
+    expiration-ms: ${SECURITY_JWT_EXPIRATION_MS:86400000}
+
+# Feign client target for main-service
+users-service:
+  url: ${USERS_SERVICE_URL:http://localhost:8091}
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+appDescription: "Pragma Plazoleta - Main Service"
+appVersion: "1.0.0"
