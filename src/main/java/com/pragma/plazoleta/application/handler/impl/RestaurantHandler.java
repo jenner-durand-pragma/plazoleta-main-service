@@ -17,6 +17,9 @@ public class RestaurantHandler implements IRestaurantHandler {
 
     @Override
     public RestaurantResponseDto createRestaurant(CreateRestaurantRequestDto request) {
-        return null;
+        var restaurantToCreate = restaurantRequestMapper.toRestaurant(request);
+        var restaurantCreated = restaurantServicePort.createRestaurant(restaurantToCreate);
+
+        return restaurantResponseMapper.toResponse(restaurantCreated);
     }
 }
