@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.request.restaurant.CreateRestaurantRequestDto;
 import com.pragma.plazoleta.application.dto.response.restaurant.RestaurantResponseDto;
 import com.pragma.plazoleta.application.handler.IRestaurantHandler;
+import com.pragma.plazoleta.infrastructure.exceptionhandler.GlobalExceptionHandler;
 import feign.FeignException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -14,8 +15,6 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
-
-import com.pragma.plazoleta.infrastructure.exceptionhandler.GlobalExceptionHandler;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
