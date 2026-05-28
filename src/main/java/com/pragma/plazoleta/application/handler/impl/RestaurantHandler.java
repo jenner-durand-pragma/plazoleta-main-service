@@ -7,8 +7,12 @@ import com.pragma.plazoleta.application.mapper.IRestaurantRequestMapper;
 import com.pragma.plazoleta.application.mapper.IRestaurantResponseMapper;
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+@Service
 @RequiredArgsConstructor
+@Transactional(readOnly = true)
 public class RestaurantHandler implements IRestaurantHandler {
 
     private final IRestaurantServicePort restaurantServicePort;
@@ -16,6 +20,7 @@ public class RestaurantHandler implements IRestaurantHandler {
     private final IRestaurantResponseMapper restaurantResponseMapper;
 
     @Override
+    @Transactional
     public RestaurantResponseDto createRestaurant(CreateRestaurantRequestDto request) {
         var restaurantToCreate = restaurantRequestMapper.toRestaurant(request);
         var restaurantCreated = restaurantServicePort.createRestaurant(restaurantToCreate);
