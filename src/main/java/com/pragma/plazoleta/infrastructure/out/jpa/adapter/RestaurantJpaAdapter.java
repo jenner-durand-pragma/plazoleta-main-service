@@ -14,11 +14,14 @@ public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
 
     @Override
     public Restaurant save(Restaurant restaurant) {
-        return null;
+        var entity = restaurantEntityMapper.toEntity(restaurant);
+        var saved = restaurantRepository.save(entity);
+
+        return restaurantEntityMapper.toModel(saved);
     }
 
     @Override
     public Boolean existsByNit(String nit) {
-        return null;
+        return restaurantRepository.existsByNit(nit);
     }
 }
