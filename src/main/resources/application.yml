@@ -8,8 +8,8 @@ spring:
     active: ${SPRING_PROFILES_ACTIVE:dev}
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:mysql://localhost:3307/db_plazoleta_main?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC}
-    username: ${SPRING_DATASOURCE_USERNAME:plazoleta}
-    password: ${SPRING_DATASOURCE_PASSWORD:plazoletapass}
+    username: ${SPRING_DATASOURCE_USERNAME:main_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:mainpass}
     driver-class-name: com.mysql.cj.jdbc.Driver
   jpa:
     hibernate:
