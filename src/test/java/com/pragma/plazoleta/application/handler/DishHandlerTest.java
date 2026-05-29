@@ -14,6 +14,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mapstruct.factory.Mappers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
@@ -87,11 +88,20 @@ class DishHandlerTest {
 
         var result = dishHandler.createDish(requestDto);
 
+        var dishCaptor = ArgumentCaptor.forClass(Dish.class);
+        verify(dishServicePort).createDish(dishCaptor.capture(), eq(OWNER_ID));
+        var passedDish = dishCaptor.getValue();
+
+        assertThat(passedDish.getName()).isEqualTo("Pineapple Pizza");
+        assertThat(passedDish.getPrice()).isEqualTo(15000);
+        assertThat(passedDish.getCategory().getId()).isEqualTo(1L);
+        assertThat(passedDish.getRestaurant().getId()).isEqualTo(10L);
+
         verify(dishServicePort).createDish(any(Dish.class), eq(2L));
         verify(dishRequestMapper).toDish(requestDto);
         verify(dishResponseMapper).toResponse(saved);
 
-
+        assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getActive()).isTrue();
     }
