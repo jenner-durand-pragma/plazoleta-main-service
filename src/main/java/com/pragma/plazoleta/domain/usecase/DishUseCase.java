@@ -31,6 +31,11 @@ public class DishUseCase implements IDishServicePort {
         return dishPersistencePort.save(dish);
     }
 
+    @Override
+    public Dish updateDish(Long dishId, Integer price, String description, Long ownerId) {
+        return null;
+    }
+
     private Category resolveCategory(Long categoryId) {
         var category = categoryPersistencePort.findById(categoryId);
         if (category == null) {
