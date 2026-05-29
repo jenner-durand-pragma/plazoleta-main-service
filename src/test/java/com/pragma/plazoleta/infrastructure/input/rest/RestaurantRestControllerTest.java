@@ -30,7 +30,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
                 org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
         })
 @Import(GlobalExceptionHandler.class)
-@DisplayName("RestaurantRestController - Create Restaurant (HU02)")
 class RestaurantRestControllerTest {
 
     @Autowired
