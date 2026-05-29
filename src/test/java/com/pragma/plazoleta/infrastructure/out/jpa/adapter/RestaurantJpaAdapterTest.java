@@ -59,4 +59,13 @@ class RestaurantJpaAdapterTest {
         assertThat(restaurantJpaAdapter.existsByNit("9001234567")).isTrue();
         assertThat(restaurantJpaAdapter.existsByNit("0000000000")).isFalse();
     }
+
+    @Test
+    @DisplayName("Should return restaurant when Id exists")
+    void shouldReturnRestaurantWhenIdExists() {
+        var saved = restaurantJpaAdapter.save(buildRestaurant());
+
+        assertThat(restaurantJpaAdapter.findById(saved.getId())).isNotNull();
+        assertThat(restaurantJpaAdapter.findById(10L)).isNull();
+    }
 }

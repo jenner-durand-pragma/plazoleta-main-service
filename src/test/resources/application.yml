@@ -12,5 +12,8 @@ spring:
         dialect: org.hibernate.dialect.H2Dialect
     show-sql: false
 
+users-service:
+  url: http://localhost:8091
+
 appDescription: "Pragma Plazoleta - Main Service Test"
 appVersion: "1.0.0"
