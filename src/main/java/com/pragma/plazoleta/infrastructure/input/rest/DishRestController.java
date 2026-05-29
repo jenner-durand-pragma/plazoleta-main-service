@@ -57,10 +57,26 @@ public class DishRestController {
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
+    @Operation(summary = "Update a dish",
+            description = "Updates only the price and description of a dish. ")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Dish updated successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = DishResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Dish not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Caller does not own the restaurant",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/{id}")
     public ResponseEntity<DishResponseDto> updateDish(
             @PathVariable Long id,
             @Valid @RequestBody UpdateDishRequestDto request) {
-        return null;
+        return ResponseEntity.ok(dishHandler.updateDish(id, request));
     }
 }
