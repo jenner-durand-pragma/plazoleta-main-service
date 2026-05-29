@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.application.handler;
 
 import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
+import com.pragma.plazoleta.application.dto.request.dish.UpdateDishRequestDto;
 import com.pragma.plazoleta.application.handler.impl.DishHandler;
 import com.pragma.plazoleta.application.mapper.IDishRequestMapper;
 import com.pragma.plazoleta.application.mapper.IDishResponseMapper;
@@ -42,6 +43,8 @@ class DishHandlerTest {
     private CreateDishRequestDto requestDto;
     private Dish saved;
 
+    private static final Long OWNER_ID = 2L;
+
     @BeforeEach
     void setUp() {
         requestDto = CreateDishRequestDto.builder()
@@ -50,20 +53,28 @@ class DishHandlerTest {
                 .price(15000)
                 .categoryId(1L)
                 .restaurantId(10L)
-                .ownerId(2L)
+                .ownerId(OWNER_ID)
                 .imageUrl("https://dishes.example.com/dish.png")
                 .build();
 
-        var categoryReference = Category.builder().id(1L).build();
-        var restaurantReference = Restaurant.builder().id(10L).build();
+        var mainCourse = Category.builder()
+                .id(1L)
+                .name("Main Course")
+                .description("Main dishes")
+                .build();
+        var restaurant = Restaurant.builder()
+                .id(10L)
+                .name("Pizza Place")
+                .ownerId(OWNER_ID)
+                .build();
 
         saved = Dish.builder()
                 .id(1L)
                 .name("Pineapple Pizza")
                 .description("Classic Hawaiian pizza featuring a perfect balance of sweet juicy pineapple chunks")
                 .price(15000)
-                .category(categoryReference)
-                .restaurant(restaurantReference)
+                .category(mainCourse)
+                .restaurant(restaurant)
                 .imageUrl("https://dishes.example.com/dish.png")
                 .active(true)
                 .build();
@@ -83,5 +94,30 @@ class DishHandlerTest {
 
         assertThat(result.getId()).isEqualTo(1L);
         assertThat(result.getActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should update price and description in dish")
+    void shouldUpdateDishPriceAndDescription() {
+        var updateRequest = UpdateDishRequestDto.builder()
+                .price(20000)
+                .description("Change Description")
+                .ownerId(OWNER_ID)
+                .build();
+
+        when(dishServicePort.updateDish(
+                2L,
+                20000,
+                "Change Description",
+                OWNER_ID)
+        ).thenReturn(saved);
+
+        var result = dishHandler.updateDish(2L, updateRequest);
+
+        verify(dishServicePort).updateDish(2L, 20000, "Change Description", OWNER_ID);
+        verify(dishResponseMapper).toResponse(saved);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
     }
 }
