@@ -20,6 +20,7 @@ public class DishHandler implements IDishHandler {
     private final IDishResponseMapper dishResponseMapper;
 
     @Override
+    @Transactional
     public DishResponseDto createDish(CreateDishRequestDto request) {
         var dishToCreate = dishRequestMapper.toDish(request);
         var dishCreated = dishServicePort.createDish(dishToCreate, request.getOwnerId());
