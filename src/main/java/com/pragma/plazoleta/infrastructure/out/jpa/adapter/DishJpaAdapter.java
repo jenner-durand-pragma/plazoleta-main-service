@@ -22,6 +22,8 @@ public class DishJpaAdapter implements IDishPersistencePort {
 
     @Override
     public Dish findById(Long id) {
-        return null;
+        return dishRepository.findById(id)
+                .map(dishEntityMapper::toModel)
+                .orElse(null);
     }
 }
