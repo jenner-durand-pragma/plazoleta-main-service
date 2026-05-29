@@ -37,8 +37,14 @@ public class DishUseCase implements IDishServicePort {
         var dish = resolveDish(dishId);
 
         dish.checkOwnership(ownerId);
-        dish.setPrice(price);
-        dish.setDescription(description);
+
+        if (price != null) {
+            dish.setPrice(price);
+        }
+
+        if (description != null && !description.trim().isEmpty()) {
+            dish.setDescription(description);
+        }
 
         return dishPersistencePort.save(dish);
     }
