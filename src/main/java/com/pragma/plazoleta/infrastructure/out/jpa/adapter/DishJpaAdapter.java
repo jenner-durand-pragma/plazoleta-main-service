@@ -14,6 +14,9 @@ public class DishJpaAdapter implements IDishPersistencePort {
 
     @Override
     public Dish save(Dish dish) {
-        return null;
+        var entity = dishEntityMapper.toEntity(dish);
+        var saved = dishRepository.save(entity);
+
+        return dishEntityMapper.toModel(saved);
     }
 }
