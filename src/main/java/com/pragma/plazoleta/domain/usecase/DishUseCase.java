@@ -2,6 +2,7 @@ package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.api.IDishServicePort;
 import com.pragma.plazoleta.domain.exception.category.CategoryNotFoundException;
+import com.pragma.plazoleta.domain.exception.dish.DishNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.model.Category;
 import com.pragma.plazoleta.domain.model.Dish;
@@ -31,6 +32,23 @@ public class DishUseCase implements IDishServicePort {
         return dishPersistencePort.save(dish);
     }
 
+    @Override
+    public Dish updateDish(Long dishId, Integer price, String description, Long ownerId) {
+        var dish = resolveDish(dishId);
+
+        dish.checkOwnership(ownerId);
+
+        if (price != null) {
+            dish.setPrice(price);
+        }
+
+        if (description != null && !description.trim().isEmpty()) {
+            dish.setDescription(description);
+        }
+
+        return dishPersistencePort.save(dish);
+    }
+
     private Category resolveCategory(Long categoryId) {
         var category = categoryPersistencePort.findById(categoryId);
         if (category == null) {
@@ -47,5 +65,14 @@ public class DishUseCase implements IDishServicePort {
         }
 
         return restaurant;
+    }
+
+    private Dish resolveDish(Long dishId) {
+        var dish = dishPersistencePort.findById(dishId);
+        if (dish == null) {
+            throw new DishNotFoundException(dishId);
+        }
+
+        return dish;
     }
 }

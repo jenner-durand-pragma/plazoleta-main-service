@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.exception.category.CategoryNotFoundException;
+import com.pragma.plazoleta.domain.exception.dish.DishNotFoundException;
 import com.pragma.plazoleta.domain.exception.dish.DishOwnershipException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.model.Category;
@@ -59,15 +60,13 @@ class DishUseCaseTest {
                 .ownerId(OWNER_ID)
                 .build();
 
-        var categoryReference = Category.builder().id(1L).build();
-        var restaurantReference = Restaurant.builder().id(10L).build();
-
         validDish = Dish.builder()
+                .id(1L)
                 .name("Pineapple Pizza")
                 .description("Classic Hawaiian pizza featuring a perfect balance of sweet juicy pineapple chunks")
                 .price(15000)
-                .category(categoryReference)
-                .restaurant(restaurantReference)
+                .category(mainCourse)
+                .restaurant(restaurant)
                 .imageUrl("https://dishes.example.com/dish.png")
                 .build();
     }
@@ -95,7 +94,7 @@ class DishUseCaseTest {
 
     @Test
     @DisplayName("Should throw CategoryNotFoundException when category does not exist")
-    void shouldThrowWhenCategoryDoesNotExist() {
+    void shouldThrowWhenCategoryDoesNotExistInCreateDish() {
         when(categoryPersistencePort.findById(1L)).thenReturn(null);
 
         assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
@@ -106,7 +105,7 @@ class DishUseCaseTest {
 
     @Test
     @DisplayName("Should throw RestaurantNotFoundException when restaurant does not exist")
-    void shouldThrowWhenRestaurantDoesNotExist() {
+    void shouldThrowWhenRestaurantDoesNotExistInCreateDish() {
         when(categoryPersistencePort.findById(1L)).thenReturn(mainCourse);
         when(restaurantPersistencePort.findById(10L)).thenReturn(null);
 
@@ -118,7 +117,7 @@ class DishUseCaseTest {
 
     @Test
     @DisplayName("Should throw DishOwnershipException when the user is not the restaurant owner")
-    void shouldThrowWhenUserIsNotTheOwner() {
+    void shouldThrowWhenUserIsNotTheOwnerInCreateDish() {
         var otherOwnerRestaurant = new Restaurant();
         otherOwnerRestaurant.setId(10L);
         otherOwnerRestaurant.setOwnerId(99L);
@@ -130,5 +129,100 @@ class DishUseCaseTest {
                 .isInstanceOf(DishOwnershipException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
+    }
+
+    @Test
+    @DisplayName("Should update only price and description when caller is the owner")
+    void shouldUpdateDishPriceAndDescription() {
+        validDish.setActive(true);
+
+        when(dishPersistencePort.findById(1L))
+                .thenReturn(validDish);
+        when(dishPersistencePort.save(any(Dish.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        var result = dishUseCase.updateDish(
+                1L,
+                20000,
+                "Updated description",
+                OWNER_ID
+        );
+
+        var captor = ArgumentCaptor.forClass(Dish.class);
+        verify(dishPersistencePort).save(captor.capture());
+        var persisted = captor.getValue();
+
+        assertThat(persisted.getPrice()).isEqualTo(20000);
+        assertThat(persisted.getDescription()).isEqualTo("Updated description");
+        assertThat(persisted.getName()).isEqualTo("Pineapple Pizza");
+        assertThat(persisted.getImageUrl()).isEqualTo("https://dishes.example.com/dish.png");
+        assertThat(persisted.getCategory().getId()).isEqualTo(1L);
+        assertThat(persisted.getRestaurant().getId()).isEqualTo(10L);
+        assertThat(persisted.getActive()).isTrue();
+
+        assertThat(persisted.getId()).isNotNull();
+        assertThat(result.getPrice()).isEqualTo(20000);
+        assertThat(result.getDescription()).isEqualTo("Updated description");
+    }
+
+    @Test
+    @DisplayName("Should throw DishNotFoundException when the dish does not exist")
+    void shouldThrowWhenDishDoesNotExistInUpdateDish() {
+        when(dishPersistencePort.findById(1L)).thenReturn(null);
+
+        assertThatThrownBy(() ->
+                dishUseCase.updateDish(1L, 20000, "Updated", OWNER_ID))
+                .isInstanceOf(DishNotFoundException.class);
+
+        verify(dishPersistencePort, never()).save(any(Dish.class));
+    }
+
+    @Test
+    @DisplayName("Should throw DishOwnershipException when caller is not the restaurant owner")
+    void shouldThrowWhenCallerIsNotTheOwnerInUpdateDish() {
+        when(dishPersistencePort.findById(1L)).thenReturn(validDish);
+
+        assertThatThrownBy(() ->
+                dishUseCase.updateDish(1L, 20000, "Updated", 999L))
+                .isInstanceOf(DishOwnershipException.class);
+
+        verify(dishPersistencePort, never()).save(any(Dish.class));
+    }
+
+    @Test
+    @DisplayName("Should update only price when description is null")
+    void shouldUpdateOnlyPriceWhenDescriptionIsNullInUpdateDish() {
+        when(dishPersistencePort.findById(1L)).thenReturn(validDish);
+        when(dishPersistencePort.save(any(Dish.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        dishUseCase.updateDish(1L, 25000, null, OWNER_ID);
+
+        var captor = ArgumentCaptor.forClass(Dish.class);
+        verify(dishPersistencePort).save(captor.capture());
+        var persisted = captor.getValue();
+
+        assertThat(persisted.getPrice()).isEqualTo(25000);
+        assertThat(persisted.getDescription())
+                .isEqualTo("Classic Hawaiian pizza featuring a perfect balance " +
+                        "of sweet juicy pineapple chunks"
+                );
+    }
+
+    @Test
+    @DisplayName("Should update only description when price is null")
+    void shouldUpdateOnlyDescriptionWhenPriceIsNullInUpdateDish() {
+        when(dishPersistencePort.findById(1L)).thenReturn(validDish);
+        when(dishPersistencePort.save(any(Dish.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        dishUseCase.updateDish(1L, null, "Brand new description", OWNER_ID);
+
+        var captor = ArgumentCaptor.forClass(Dish.class);
+        verify(dishPersistencePort).save(captor.capture());
+        var persisted = captor.getValue();
+
+        assertThat(persisted.getPrice()).isEqualTo(15000);
+        assertThat(persisted.getDescription()).isEqualTo("Brand new description");
     }
 }

@@ -90,4 +90,13 @@ class DishJpaAdapterTest {
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getName()).isEqualTo("Pineapple Pizza");
     }
+
+    @Test
+    @DisplayName("Should return dish when Id exists")
+    void shouldReturnDishWhenIdExists() {
+        var saved = dishJpaAdapter.save(buildDish());
+
+        assertThat(dishJpaAdapter.findById(saved.getId())).isNotNull();
+        assertThat(dishJpaAdapter.findById(10L)).isNull();
+    }
 }

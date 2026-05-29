@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.application.handler.impl;
 
 import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
+import com.pragma.plazoleta.application.dto.request.dish.UpdateDishRequestDto;
 import com.pragma.plazoleta.application.dto.response.dish.DishResponseDto;
 import com.pragma.plazoleta.application.handler.IDishHandler;
 import com.pragma.plazoleta.application.mapper.IDishRequestMapper;
@@ -26,5 +27,18 @@ public class DishHandler implements IDishHandler {
         var dishCreated = dishServicePort.createDish(dishToCreate, request.getOwnerId());
 
         return dishResponseMapper.toResponse(dishCreated);
+    }
+
+    @Override
+    @Transactional
+    public DishResponseDto updateDish(Long dishId, UpdateDishRequestDto request) {
+        var updated = dishServicePort.updateDish(
+                dishId,
+                request.getPrice(),
+                request.getDescription(),
+                request.getOwnerId()
+        );
+
+        return dishResponseMapper.toResponse(updated);
     }
 }
