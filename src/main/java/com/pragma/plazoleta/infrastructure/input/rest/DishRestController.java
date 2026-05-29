@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.infrastructure.input.rest;
 
 import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
+import com.pragma.plazoleta.application.dto.request.dish.UpdateDishRequestDto;
 import com.pragma.plazoleta.application.dto.response.dish.DishResponseDto;
 import com.pragma.plazoleta.application.handler.IDishHandler;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.common.ErrorResponse;
@@ -14,6 +15,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -52,5 +55,12 @@ public class DishRestController {
         var created = dishHandler.createDish(request);
 
         return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
+    @PatchMapping("/{id}")
+    public ResponseEntity<DishResponseDto> updateDish(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateDishRequestDto request) {
+        return null;
     }
 }
