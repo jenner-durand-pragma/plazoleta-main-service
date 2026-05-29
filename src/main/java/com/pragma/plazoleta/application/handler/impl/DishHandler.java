@@ -30,7 +30,15 @@ public class DishHandler implements IDishHandler {
     }
 
     @Override
+    @Transactional
     public DishResponseDto updateDish(Long dishId, UpdateDishRequestDto request) {
-        return null;
+        var updated = dishServicePort.updateDish(
+                dishId,
+                request.getPrice(),
+                request.getDescription(),
+                request.getOwnerId()
+        );
+
+        return dishResponseMapper.toResponse(updated);
     }
 }
