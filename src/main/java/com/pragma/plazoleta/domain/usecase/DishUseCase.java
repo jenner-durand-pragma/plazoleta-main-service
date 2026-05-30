@@ -50,7 +50,12 @@ public class DishUseCase implements IDishServicePort {
 
     @Override
     public Dish updateDishStatus(Long dishId, Boolean active, Long ownerId) {
-        return null;
+        var dish = resolveDish(dishId);
+
+        dish.getRestaurant().checkOwnership(ownerId);
+        dish.setActive(active);
+
+        return dishPersistencePort.save(dish);
     }
 
     private Category resolveCategory(Long categoryId) {
