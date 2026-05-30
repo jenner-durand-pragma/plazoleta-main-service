@@ -19,5 +19,6 @@ public class UserInformation {
     private String documentNumber;
     private String phone;
     private String email;
+    private String password;
     private String roleName;
 }

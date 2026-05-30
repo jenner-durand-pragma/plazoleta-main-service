@@ -6,14 +6,14 @@ import com.pragma.plazoleta.domain.exception.restaurant.NitAlreadyExistsExceptio
 import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
-import com.pragma.plazoleta.domain.spi.IUserValidationPort;
+import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class RestaurantUseCase implements IRestaurantServicePort {
 
     private final IRestaurantPersistencePort restaurantPersistencePort;
-    private final IUserValidationPort userValidationPort;
+    private final IUserInformationPort userInformationPort;
 
     @Override
     public Restaurant createRestaurant(Restaurant restaurant) {
@@ -24,7 +24,7 @@ public class RestaurantUseCase implements IRestaurantServicePort {
     }
 
     private void validateOwner(Long ownerId) {
-        var user = userValidationPort.getUserById(ownerId);
+        var user = userInformationPort.getUserById(ownerId);
 
         if (user == null || !Roles.OWNER.getName().equals(user.getRoleName())) {
             throw new UserIsNotOwnerException();
