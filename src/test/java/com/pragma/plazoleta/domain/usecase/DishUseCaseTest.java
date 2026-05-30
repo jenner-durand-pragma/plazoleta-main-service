@@ -225,4 +225,34 @@ class DishUseCaseTest {
         assertThat(persisted.getPrice()).isEqualTo(15000);
         assertThat(persisted.getDescription()).isEqualTo("Brand new description");
     }
+
+    @Test
+    @DisplayName("Should disable dish when caller is the owner")
+    void shouldDisableDish() {
+        when(dishPersistencePort.findById(validDish.getId())).thenReturn(validDish);
+        when(dishPersistencePort.save(any(Dish.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        var result = dishUseCase.updateDishStatus(validDish.getId(), false, OWNER_ID);
+
+        var captor = ArgumentCaptor.forClass(Dish.class);
+        verify(dishPersistencePort).save(captor.capture());
+
+        assertThat(captor.getValue().getActive()).isFalse();
+        assertThat(result.getActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should enable a previously disabled dish")
+    void shouldEnableDish() {
+        validDish.setActive(false);
+
+        when(dishPersistencePort.findById(validDish.getId())).thenReturn(validDish);
+        when(dishPersistencePort.save(any(Dish.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        var result = dishUseCase.updateDishStatus(validDish.getId(), true, OWNER_ID);
+
+        assertThat(result.getActive()).isTrue();
+    }
 }
