@@ -102,12 +102,35 @@ public class DishRestController {
     }
 
     @IsOwner
+    @Operation(summary = "Enable or disable a dish.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Dish status updated successfully",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = DishResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Caller is not an OWNER",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Dish not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Caller does not own the restaurant",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/{id}/status")
     public ResponseEntity<DishResponseDto> updateDishStatus(
             @PathVariable Long id,
             @Valid @RequestBody UpdateDishStatusRequestDto request,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        return null;
+        return ResponseEntity.ok(
+                dishHandler.updateDishStatus(id, request, authenticatedUser.getUserId())
+        );
     }
 }
