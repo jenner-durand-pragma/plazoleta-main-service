@@ -5,7 +5,7 @@ import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.model.UserInformation;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
-import com.pragma.plazoleta.domain.spi.IUserValidationPort;
+import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -28,7 +28,7 @@ class RestaurantUseCaseTest {
     private IRestaurantPersistencePort restaurantPersistencePort;
 
     @Mock
-    private IUserValidationPort userValidationPort;
+    private IUserInformationPort userInformationPort;
 
     @InjectMocks
     private RestaurantUseCase restaurantUseCase;
@@ -61,7 +61,7 @@ class RestaurantUseCaseTest {
     @Test
     @DisplayName("Should create a restaurant when owner is valid and NIT is unique")
     void shouldCreateRestaurantSuccessfully() {
-        when(userValidationPort.getUserById(5L))
+        when(userInformationPort.getUserById(5L))
                 .thenReturn(ownerUser);
         when(restaurantPersistencePort.existsByNit("9001234567"))
                 .thenReturn(false);
@@ -88,7 +88,7 @@ class RestaurantUseCaseTest {
                 .email("client@plazoleta.com")
                 .roleName("CLIENT")
                 .build();
-        when(userValidationPort.getUserById(5L)).thenReturn(client);
+        when(userInformationPort.getUserById(5L)).thenReturn(client);
 
         assertThatThrownBy(() -> restaurantUseCase.createRestaurant(validRestaurant))
                 .isInstanceOf(UserIsNotOwnerException.class);
@@ -99,7 +99,7 @@ class RestaurantUseCaseTest {
     @Test
     @DisplayName("Should throw UserIsNotOwnerException when user does not exist")
     void shouldThrowWhenUserDoesNotExist() {
-        when(userValidationPort.getUserById(5L)).thenReturn(null);
+        when(userInformationPort.getUserById(5L)).thenReturn(null);
 
         assertThatThrownBy(() -> restaurantUseCase.createRestaurant(validRestaurant))
                 .isInstanceOf(UserIsNotOwnerException.class);
@@ -110,7 +110,7 @@ class RestaurantUseCaseTest {
     @Test
     @DisplayName("Should throw NitAlreadyExistsException when NIT is duplicated")
     void shouldThrowWhenNitAlreadyExists() {
-        when(userValidationPort.getUserById(5L)).thenReturn(ownerUser);
+        when(userInformationPort.getUserById(5L)).thenReturn(ownerUser);
         when(restaurantPersistencePort.existsByNit("9001234567")).thenReturn(true);
 
         assertThatThrownBy(() -> restaurantUseCase.createRestaurant(validRestaurant))

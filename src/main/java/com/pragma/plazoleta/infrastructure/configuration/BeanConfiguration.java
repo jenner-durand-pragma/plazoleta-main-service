@@ -5,11 +5,11 @@ import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
 import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
-import com.pragma.plazoleta.domain.spi.IUserValidationPort;
+import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import com.pragma.plazoleta.domain.usecase.DishUseCase;
 import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.configuration.security.token.ITokenValidationPort;
-import com.pragma.plazoleta.infrastructure.out.feign.adapter.UserValidationAdapter;
+import com.pragma.plazoleta.infrastructure.out.feign.adapter.UserInformationAdapter;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IUserFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.mapper.IUserFeignMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.CategoryJpaAdapter;
@@ -43,8 +43,8 @@ public class BeanConfiguration {
     private final JwtProperties jwtProperties;
 
     @Bean
-    public IUserValidationPort userValidationPort() {
-        return new UserValidationAdapter(
+    public IUserInformationPort userValidationPort() {
+        return new UserInformationAdapter(
                 userFeignClient,
                 userFeignMapper
         );

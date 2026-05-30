@@ -6,14 +6,14 @@ import com.pragma.plazoleta.domain.exception.restaurant.NitAlreadyExistsExceptio
 import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
-import com.pragma.plazoleta.domain.spi.IUserValidationPort;
+import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor
 public class RestaurantUseCase implements IRestaurantServicePort {
 
     private final IRestaurantPersistencePort restaurantPersistencePort;
-    private final IUserValidationPort userValidationPort;
+    private final IUserInformationPort userValidationPort;
 
     @Override
     public Restaurant createRestaurant(Restaurant restaurant) {

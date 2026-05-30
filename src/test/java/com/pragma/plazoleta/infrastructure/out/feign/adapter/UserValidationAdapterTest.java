@@ -29,7 +29,7 @@ class UserValidationAdapterTest {
     private IUserFeignMapper userFeignMapper;
 
     @InjectMocks
-    private UserValidationAdapter userValidationAdapter;
+    private UserInformationAdapter userInformationAdapter;
 
     @Test
     @DisplayName("Should return mapped UserInfo when users-service responds")
@@ -56,7 +56,7 @@ class UserValidationAdapterTest {
         when(userFeignClient.getUserById(5L)).thenReturn(dto);
         when(userFeignMapper.toUserInformation(dto)).thenReturn(expected);
 
-        var result = userValidationAdapter.getUserById(5L);
+        var result = userInformationAdapter.getUserById(5L);
 
         assertThat(result).isNotNull();
         assertThat(result.getRoleName()).isEqualTo("OWNER");
@@ -81,7 +81,7 @@ class UserValidationAdapterTest {
 
         when(userFeignClient.getUserById(99L)).thenThrow(notFound);
 
-        var result = userValidationAdapter.getUserById(99L);
+        var result = userInformationAdapter.getUserById(99L);
 
         assertThat(result).isNull();
     }
