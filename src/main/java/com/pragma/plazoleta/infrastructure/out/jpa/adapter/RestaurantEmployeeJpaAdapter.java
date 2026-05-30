@@ -14,6 +14,9 @@ public class RestaurantEmployeeJpaAdapter implements IRestaurantEmployeePersiste
 
     @Override
     public RestaurantEmployee save(RestaurantEmployee employee) {
-        return null;
+        var entity = mapper.toEntity(employee);
+        var saved = repository.save(entity);
+
+        return mapper.toModel(saved);
     }
 }
