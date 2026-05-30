@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.infrastructure.configuration;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.domain.api.IDishServicePort;
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
 import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
@@ -43,10 +44,13 @@ public class BeanConfiguration {
     private final JwtProperties jwtProperties;
 
     @Bean
-    public IUserInformationPort userValidationPort() {
+    public IUserInformationPort userValidationPort(
+            ObjectMapper objectMapper
+    ) {
         return new UserInformationAdapter(
                 userFeignClient,
-                userFeignMapper
+                userFeignMapper,
+                objectMapper
         );
     }
 
@@ -66,8 +70,10 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public IRestaurantServicePort restaurantServicePort() {
-        return new RestaurantUseCase(restaurantPersistencePort(), userValidationPort());
+    public IRestaurantServicePort restaurantServicePort(
+            ObjectMapper objectMapper
+    ) {
+        return new RestaurantUseCase(restaurantPersistencePort(), userValidationPort(objectMapper));
     }
 
     @Bean
