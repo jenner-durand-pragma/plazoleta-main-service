@@ -4,6 +4,12 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.request.restaurant.CreateRestaurantRequestDto;
 import com.pragma.plazoleta.application.dto.response.restaurant.RestaurantResponseDto;
 import com.pragma.plazoleta.application.handler.IRestaurantHandler;
+import com.pragma.plazoleta.infrastructure.configuration.SecurityConfiguration;
+import com.pragma.plazoleta.infrastructure.configuration.security.CustomAccessDeniedHandler;
+import com.pragma.plazoleta.infrastructure.configuration.security.CustomAuthenticationEntryPoint;
+import com.pragma.plazoleta.infrastructure.configuration.security.CustomAuthenticationFilter;
+import com.pragma.plazoleta.infrastructure.configuration.security.token.ITokenValidationPort;
+import com.pragma.plazoleta.infrastructure.configuration.security.token.dto.AuthenticatedUser;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.GlobalExceptionHandler;
 import feign.FeignException;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,32 +20,44 @@ import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
+
+import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@WebMvcTest(controllers = RestaurantRestController.class,
-        excludeAutoConfiguration = {
-                org.springframework.boot.autoconfigure.security.servlet.SecurityAutoConfiguration.class
-        })
-@Import(GlobalExceptionHandler.class)
+@WebMvcTest(controllers = RestaurantRestController.class)
+@Import({
+        GlobalExceptionHandler.class,
+        SecurityConfiguration.class,
+        CustomAuthenticationFilter.class,
+        CustomAuthenticationEntryPoint.class,
+        CustomAccessDeniedHandler.class
+})
 class RestaurantRestControllerTest {
 
     @Autowired
     private MockMvc mockMvc;
 
     @MockBean
+    private ITokenValidationPort tokenValidationPort;
+
+    @MockBean
     private IRestaurantHandler restaurantHandler;
 
     private ObjectMapper objectMapper;
     private CreateRestaurantRequestDto validRequest;
+    private UsernamePasswordAuthenticationToken userAuthentication;
 
     @BeforeEach
     void setUp() {
@@ -52,6 +70,13 @@ class RestaurantRestControllerTest {
                 .logoUrl("https://logo.example.com/image.png")
                 .nit("9001234567")
                 .build();
+
+        var principal = new AuthenticatedUser(2L, "jenner.durand@plazoleta.com", "ADMIN");
+        userAuthentication = new UsernamePasswordAuthenticationToken(
+                principal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
     }
 
     @Test
@@ -69,6 +94,7 @@ class RestaurantRestControllerTest {
         when(restaurantHandler.createRestaurant(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/restaurants")
+                        .with(authentication(userAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isCreated())
@@ -82,6 +108,7 @@ class RestaurantRestControllerTest {
         validRequest.setNit("ABC123");
 
         mockMvc.perform(post("/api/v1/restaurants")
+                        .with(authentication(userAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isBadRequest());
@@ -95,6 +122,7 @@ class RestaurantRestControllerTest {
         validRequest.setName("12345");
 
         mockMvc.perform(post("/api/v1/restaurants")
+                        .with(authentication(userAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isBadRequest());
@@ -109,6 +137,7 @@ class RestaurantRestControllerTest {
         when(restaurantHandler.createRestaurant(any())).thenThrow(feignExceptionMock);
 
         mockMvc.perform(post("/api/v1/restaurants")
+                        .with(authentication(userAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isServiceUnavailable())
@@ -124,6 +153,7 @@ class RestaurantRestControllerTest {
         validRequest.setPhone("+57300A5698");
 
         mockMvc.perform(post("/api/v1/restaurants")
+                        .with(authentication(userAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isBadRequest());
@@ -137,6 +167,7 @@ class RestaurantRestControllerTest {
         validRequest.setOwnerId(null);
 
         mockMvc.perform(post("/api/v1/restaurants")
+                        .with(authentication(userAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isBadRequest());

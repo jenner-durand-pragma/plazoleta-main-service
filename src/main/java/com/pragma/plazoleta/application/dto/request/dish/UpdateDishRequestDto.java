@@ -7,8 +7,6 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.validation.constraints.NotEmpty;
-import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Positive;
 
 @Getter
@@ -24,9 +22,4 @@ public class UpdateDishRequestDto {
 
     @Schema(description = "New description", example = "Updated tomato sauce, mozzarella and basil")
     private String description;
-
-    @NotNull(message = "Owner id is required")
-    @Positive(message = "Owner id must be positive")
-    @Schema(description = "Id of the requesting owner", example = "2")
-    private Long ownerId;
 }

@@ -3,6 +3,7 @@ package com.pragma.plazoleta.infrastructure.input.rest;
 import com.pragma.plazoleta.application.dto.request.restaurant.CreateRestaurantRequestDto;
 import com.pragma.plazoleta.application.dto.response.restaurant.RestaurantResponseDto;
 import com.pragma.plazoleta.application.handler.IRestaurantHandler;
+import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsAdmin;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.common.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -29,6 +30,7 @@ public class RestaurantRestController {
 
     private final IRestaurantHandler restaurantHandler;
 
+    @IsAdmin
     @Operation(summary = "Create a restaurant",
             description = "Allows to register a restaurant.")
     @ApiResponses(value = {
@@ -36,6 +38,12 @@ public class RestaurantRestController {
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = RestaurantResponseDto.class))),
             @ApiResponse(responseCode = "400", description = "Invalid input data",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Caller is not an ADMIN",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
                             schema = @Schema(implementation = ErrorResponse.class))),
             @ApiResponse(responseCode = "409", description = "NIT already exists",

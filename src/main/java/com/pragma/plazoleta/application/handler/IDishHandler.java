@@ -6,7 +6,7 @@ import com.pragma.plazoleta.application.dto.response.dish.DishResponseDto;
 
 public interface IDishHandler {
 
-    DishResponseDto createDish(CreateDishRequestDto request);
-    DishResponseDto updateDish(Long dishId, UpdateDishRequestDto request);
+    DishResponseDto createDish(CreateDishRequestDto request, Long ownerId);
+    DishResponseDto updateDish(Long dishId, UpdateDishRequestDto request, Long ownerId);
 
 }
