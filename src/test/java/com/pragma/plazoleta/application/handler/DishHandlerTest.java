@@ -54,7 +54,6 @@ class DishHandlerTest {
                 .price(15000)
                 .categoryId(1L)
                 .restaurantId(10L)
-                .ownerId(OWNER_ID)
                 .imageUrl("https://dishes.example.com/dish.png")
                 .build();
 
@@ -86,7 +85,7 @@ class DishHandlerTest {
     void shouldCreateDish() {
         when(dishServicePort.createDish(any(Dish.class), eq(2L))).thenReturn(saved);
 
-        var result = dishHandler.createDish(requestDto);
+        var result = dishHandler.createDish(requestDto, OWNER_ID);
 
         var dishCaptor = ArgumentCaptor.forClass(Dish.class);
         verify(dishServicePort).createDish(dishCaptor.capture(), eq(OWNER_ID));
@@ -112,7 +111,6 @@ class DishHandlerTest {
         var updateRequest = UpdateDishRequestDto.builder()
                 .price(20000)
                 .description("Change Description")
-                .ownerId(OWNER_ID)
                 .build();
 
         when(dishServicePort.updateDish(
@@ -122,7 +120,7 @@ class DishHandlerTest {
                 OWNER_ID)
         ).thenReturn(saved);
 
-        var result = dishHandler.updateDish(2L, updateRequest);
+        var result = dishHandler.updateDish(2L, updateRequest, OWNER_ID);
 
         verify(dishServicePort).updateDish(2L, 20000, "Change Description", OWNER_ID);
         verify(dishResponseMapper).toResponse(saved);

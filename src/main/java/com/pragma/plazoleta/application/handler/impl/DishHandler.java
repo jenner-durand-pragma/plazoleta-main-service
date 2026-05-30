@@ -22,21 +22,21 @@ public class DishHandler implements IDishHandler {
 
     @Override
     @Transactional
-    public DishResponseDto createDish(CreateDishRequestDto request) {
+    public DishResponseDto createDish(CreateDishRequestDto request, Long ownerId) {
         var dishToCreate = dishRequestMapper.toDish(request);
-        var dishCreated = dishServicePort.createDish(dishToCreate, request.getOwnerId());
+        var dishCreated = dishServicePort.createDish(dishToCreate, ownerId);
 
         return dishResponseMapper.toResponse(dishCreated);
     }
 
     @Override
     @Transactional
-    public DishResponseDto updateDish(Long dishId, UpdateDishRequestDto request) {
+    public DishResponseDto updateDish(Long dishId, UpdateDishRequestDto request, Long ownerId) {
         var updated = dishServicePort.updateDish(
                 dishId,
                 request.getPrice(),
                 request.getDescription(),
-                request.getOwnerId()
+                ownerId
         );
 
         return dishResponseMapper.toResponse(updated);
