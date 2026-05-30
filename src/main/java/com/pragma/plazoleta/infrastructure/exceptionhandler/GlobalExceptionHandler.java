@@ -3,11 +3,13 @@ package com.pragma.plazoleta.infrastructure.exceptionhandler;
 import com.pragma.plazoleta.domain.exception.BusinessRuleException;
 import com.pragma.plazoleta.domain.exception.ConflictException;
 import com.pragma.plazoleta.domain.exception.NotFoundException;
+import com.pragma.plazoleta.domain.exception.UnauthorizedException;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.common.ErrorResponse;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.common.FieldErrorDetail;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -40,6 +42,24 @@ public class GlobalExceptionHandler {
                 .map(field -> List.of(new FieldErrorDetail(field, ex.getMessage())))
                 .orElse(Collections.emptyList());
         return build(HttpStatus.CONFLICT, ex.getMessage(), request, fieldErrors);
+    }
+
+    // ─── 401 Unauthorized (invalid credentials) ───
+    @ExceptionHandler(UnauthorizedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthorized(
+            UnauthorizedException ex,
+            WebRequest request
+    ) {
+        return build(HttpStatus.UNAUTHORIZED, ex.getMessage(), request, Collections.emptyList());
+    }
+
+    // ─── 403 Forbidden ───
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErrorResponse> handleAccessDenied(AccessDeniedException ex, WebRequest request) {
+        return build(HttpStatus.FORBIDDEN,
+                "You do not have permission to access this resource",
+                request,
+                Collections.emptyList());
     }
 
     // ─── 404 Not Found ───

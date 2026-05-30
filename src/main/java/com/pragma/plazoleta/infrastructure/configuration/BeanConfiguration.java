@@ -8,6 +8,7 @@ import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserValidationPort;
 import com.pragma.plazoleta.domain.usecase.DishUseCase;
 import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
+import com.pragma.plazoleta.infrastructure.configuration.security.token.ITokenValidationPort;
 import com.pragma.plazoleta.infrastructure.out.feign.adapter.UserValidationAdapter;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IUserFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.mapper.IUserFeignMapper;
@@ -20,6 +21,8 @@ import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEntityMappe
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.ICategoryRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IDishRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantRepository;
+import com.pragma.plazoleta.infrastructure.out.security.jwt.JwtAdapter;
+import com.pragma.plazoleta.infrastructure.out.security.jwt.configuration.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -36,6 +39,8 @@ public class BeanConfiguration {
     private final IDishEntityMapper dishEntityMapper;
     private final IUserFeignClient userFeignClient;
     private final IUserFeignMapper userFeignMapper;
+
+    private final JwtProperties jwtProperties;
 
     @Bean
     public IUserValidationPort userValidationPort() {
@@ -68,5 +73,10 @@ public class BeanConfiguration {
     @Bean
     public IDishServicePort dishServicePort() {
         return new DishUseCase(dishPersistencePort(), restaurantPersistencePort(), categoryPersistencePort());
+    }
+
+    @Bean
+    public ITokenValidationPort tokenValidationPort() {
+        return new JwtAdapter(jwtProperties);
     }
 }
