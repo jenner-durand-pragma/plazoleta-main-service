@@ -2,8 +2,7 @@ package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
-import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeAlreadyAssignedException;
-import com.pragma.plazoleta.domain.exception.restaurantemployee.RemoteUserConflictException;
+import com.pragma.plazoleta.domain.exception.restaurantemployee.UserInformationConflictException;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.model.RestaurantEmployee;
 import com.pragma.plazoleta.domain.model.UserInformation;
@@ -19,8 +18,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
@@ -35,7 +32,7 @@ class EmployeeUseCaseTest {
     private IRestaurantPersistencePort restaurantPersistencePort;
 
     @Mock
-    private IRestaurantEmployeePersistencePort employeePersistencePort;
+    private IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort;
 
     @Mock
     private IUserInformationPort userInformationPort;
@@ -79,15 +76,13 @@ class EmployeeUseCaseTest {
                 .thenReturn(restaurant);
         when(userInformationPort.createEmployee(registration))
                 .thenReturn(REMOTE_USER_ID);
-        when(employeePersistencePort.existsByUserId(REMOTE_USER_ID))
-                .thenReturn(false);
-        when(employeePersistencePort.save(any()))
+        when(restaurantEmployeePersistencePort.save(any()))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         var result = employeeUseCase.createEmployee(RESTAURANT_ID, registration, CALLER_OWNER_ID);
 
         var captor = ArgumentCaptor.forClass(RestaurantEmployee.class);
-        verify(employeePersistencePort).save(captor.capture());
+        verify(restaurantEmployeePersistencePort).save(captor.capture());
 
         assertThat(captor.getValue().getUserId()).isEqualTo(REMOTE_USER_ID);
         assertThat(captor.getValue().getRestaurantId()).isEqualTo(RESTAURANT_ID);
@@ -106,7 +101,7 @@ class EmployeeUseCaseTest {
                 .isInstanceOf(RestaurantNotFoundException.class);
 
         verify(userInformationPort, never()).createEmployee(any());
-        verify(employeePersistencePort, never()).save(any());
+        verify(restaurantEmployeePersistencePort, never()).save(any());
     }
 
     @Test
@@ -122,34 +117,20 @@ class EmployeeUseCaseTest {
                 .isInstanceOf(UserIsNotOwnerException.class);
 
         verify(userInformationPort, never()).createEmployee(any());
-        verify(employeePersistencePort, never()).save(any());
+        verify(restaurantEmployeePersistencePort, never()).save(any());
     }
 
     @Test
-    @DisplayName("Should propagate RemoteUserConflictException from users-service in create employee")
+    @DisplayName("Should propagate UserInformationConflictException from users-service in create employee")
     void shouldPropagateConflictInCreateEmployee() {
         when(restaurantPersistencePort.findById(RESTAURANT_ID)).thenReturn(restaurant);
         when(userInformationPort.createEmployee(registration))
-                .thenThrow(new RemoteUserConflictException("Email already exists"));
+                .thenThrow(new UserInformationConflictException("Email already exists"));
 
         assertThatThrownBy(() ->
                 employeeUseCase.createEmployee(RESTAURANT_ID, registration, CALLER_OWNER_ID))
-                .isInstanceOf(RemoteUserConflictException.class);
+                .isInstanceOf(UserInformationConflictException.class);
 
-        verify(employeePersistencePort, never()).save(any());
-    }
-
-    @Test
-    @DisplayName("Should throw EmployeeAlreadyAssignedException when user is already an employee in create employee")
-    void shouldThrowWhenAlreadyAssignedInCreateEmployee() {
-        when(restaurantPersistencePort.findById(RESTAURANT_ID)).thenReturn(restaurant);
-        when(userInformationPort.createEmployee(registration)).thenReturn(REMOTE_USER_ID);
-        when(employeePersistencePort.existsByUserId(REMOTE_USER_ID)).thenReturn(true);
-
-        assertThatThrownBy(() ->
-                employeeUseCase.createEmployee(RESTAURANT_ID, registration, CALLER_OWNER_ID))
-                .isInstanceOf(EmployeeAlreadyAssignedException.class);
-
-        verify(employeePersistencePort, never()).save(any());
+        verify(restaurantEmployeePersistencePort, never()).save(any());
     }
 }

@@ -2,9 +2,9 @@ package com.pragma.plazoleta.domain.exception.restaurantemployee;
 
 import com.pragma.plazoleta.domain.exception.ConflictException;
 
-public class RemoteUserConflictException extends ConflictException {
+public class UserInformationConflictException extends ConflictException {
 
-    public RemoteUserConflictException(String message) {
+    public UserInformationConflictException(String message) {
         super(message);
     }
 

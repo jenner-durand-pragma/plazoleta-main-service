@@ -6,5 +6,4 @@ public interface IRestaurantEmployeePersistencePort {
 
     RestaurantEmployee save(RestaurantEmployee employee);
 
-    Boolean existsByUserId(Long userId);
 }

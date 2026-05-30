@@ -13,7 +13,7 @@ import lombok.RequiredArgsConstructor;
 public class RestaurantUseCase implements IRestaurantServicePort {
 
     private final IRestaurantPersistencePort restaurantPersistencePort;
-    private final IUserInformationPort userValidationPort;
+    private final IUserInformationPort userInformationPort;
 
     @Override
     public Restaurant createRestaurant(Restaurant restaurant) {
@@ -24,7 +24,7 @@ public class RestaurantUseCase implements IRestaurantServicePort {
     }
 
     private void validateOwner(Long ownerId) {
-        var user = userValidationPort.getUserById(ownerId);
+        var user = userInformationPort.getUserById(ownerId);
 
         if (user == null || !Roles.OWNER.getName().equals(user.getRoleName())) {
             throw new UserIsNotOwnerException();

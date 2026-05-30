@@ -8,7 +8,7 @@ public interface IEmployeeServicePort {
     RestaurantEmployee createEmployee(
             Long restaurantId,
             UserInformation userInformation,
-            Long callerOwnerId
+            Long ownerId
     );
 
 }
