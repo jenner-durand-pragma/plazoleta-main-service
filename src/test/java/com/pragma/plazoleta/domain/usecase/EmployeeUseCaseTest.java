@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
+import com.pragma.plazoleta.domain.exception.restaurant.RestaurantOwnershipException;
 import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
 import com.pragma.plazoleta.domain.exception.restaurantemployee.UserInformationConflictException;
 import com.pragma.plazoleta.domain.model.Restaurant;
@@ -105,8 +106,8 @@ class EmployeeUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should throw UserIsNotOwnerException when caller is not the restaurant owner in create employee")
-    void shouldThrowWhenCallerIsNotOwnerInCreateEmployee() {
+    @DisplayName("Should throw RestaurantOwnershipException when caller is not the restaurant owner in create employee")
+    void shouldThrowWhenCallerIsNotOwnerOfRestaurantInCreateEmployee() {
         var otherRestaurant = new Restaurant();
         otherRestaurant.setId(RESTAURANT_ID);
         otherRestaurant.setOwnerId(99L);
@@ -114,7 +115,7 @@ class EmployeeUseCaseTest {
 
         assertThatThrownBy(() ->
                 employeeUseCase.createEmployee(RESTAURANT_ID, registration, CALLER_OWNER_ID))
-                .isInstanceOf(UserIsNotOwnerException.class);
+                .isInstanceOf(RestaurantOwnershipException.class);
 
         verify(userInformationPort, never()).createEmployee(any());
         verify(restaurantEmployeePersistencePort, never()).save(any());

@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.domain.model;
 
+import com.pragma.plazoleta.domain.exception.restaurant.RestaurantOwnershipException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -21,4 +22,10 @@ public class Restaurant {
     private String logoUrl;
     private String nit;
 
+    public void checkOwnership(Long ownerId) {
+        if (!this.ownerId.equals(ownerId)) {
+
+            throw new RestaurantOwnershipException();
+        }
+    }
 }

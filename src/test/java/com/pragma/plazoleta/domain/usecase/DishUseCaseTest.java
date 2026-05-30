@@ -2,7 +2,7 @@ package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.exception.category.CategoryNotFoundException;
 import com.pragma.plazoleta.domain.exception.dish.DishNotFoundException;
-import com.pragma.plazoleta.domain.exception.dish.DishOwnershipException;
+import com.pragma.plazoleta.domain.exception.restaurant.RestaurantOwnershipException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.model.Category;
 import com.pragma.plazoleta.domain.model.Dish;
@@ -126,7 +126,7 @@ class DishUseCaseTest {
         when(restaurantPersistencePort.findById(10L)).thenReturn(otherOwnerRestaurant);
 
         assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
-                .isInstanceOf(DishOwnershipException.class);
+                .isInstanceOf(RestaurantOwnershipException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
     }
@@ -184,7 +184,7 @@ class DishUseCaseTest {
 
         assertThatThrownBy(() ->
                 dishUseCase.updateDish(1L, 20000, "Updated", 999L))
-                .isInstanceOf(DishOwnershipException.class);
+                .isInstanceOf(RestaurantOwnershipException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
     }
