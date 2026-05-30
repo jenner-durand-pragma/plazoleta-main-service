@@ -23,10 +23,10 @@ public class DishUseCase implements IDishServicePort {
     public Dish createDish(Dish dish, Long ownerId) {
         var category = resolveCategory(dish.getCategory().getId());
         var restaurant = resolveRestaurant(dish.getRestaurant().getId());
+        restaurant.checkOwnership(ownerId);
+
         dish.setCategory(category);
         dish.setRestaurant(restaurant);
-
-        dish.checkOwnership(ownerId);
         dish.setActive(true);
 
         return dishPersistencePort.save(dish);
@@ -35,8 +35,7 @@ public class DishUseCase implements IDishServicePort {
     @Override
     public Dish updateDish(Long dishId, Integer price, String description, Long ownerId) {
         var dish = resolveDish(dishId);
-
-        dish.checkOwnership(ownerId);
+        dish.getRestaurant().checkOwnership(ownerId);
 
         if (price != null) {
             dish.setPrice(price);
@@ -45,6 +44,16 @@ public class DishUseCase implements IDishServicePort {
         if (description != null && !description.trim().isEmpty()) {
             dish.setDescription(description);
         }
+
+        return dishPersistencePort.save(dish);
+    }
+
+    @Override
+    public Dish updateDishStatus(Long dishId, Boolean active, Long ownerId) {
+        var dish = resolveDish(dishId);
+
+        dish.getRestaurant().checkOwnership(ownerId);
+        dish.setActive(active);
 
         return dishPersistencePort.save(dish);
     }

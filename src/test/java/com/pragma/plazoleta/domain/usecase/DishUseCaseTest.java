@@ -2,7 +2,7 @@ package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.exception.category.CategoryNotFoundException;
 import com.pragma.plazoleta.domain.exception.dish.DishNotFoundException;
-import com.pragma.plazoleta.domain.exception.dish.DishOwnershipException;
+import com.pragma.plazoleta.domain.exception.restaurant.RestaurantOwnershipException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.model.Category;
 import com.pragma.plazoleta.domain.model.Dish;
@@ -126,7 +126,7 @@ class DishUseCaseTest {
         when(restaurantPersistencePort.findById(10L)).thenReturn(otherOwnerRestaurant);
 
         assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
-                .isInstanceOf(DishOwnershipException.class);
+                .isInstanceOf(RestaurantOwnershipException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
     }
@@ -184,7 +184,7 @@ class DishUseCaseTest {
 
         assertThatThrownBy(() ->
                 dishUseCase.updateDish(1L, 20000, "Updated", 999L))
-                .isInstanceOf(DishOwnershipException.class);
+                .isInstanceOf(RestaurantOwnershipException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
     }
@@ -224,5 +224,35 @@ class DishUseCaseTest {
 
         assertThat(persisted.getPrice()).isEqualTo(15000);
         assertThat(persisted.getDescription()).isEqualTo("Brand new description");
+    }
+
+    @Test
+    @DisplayName("Should disable dish when caller is the owner")
+    void shouldDisableDish() {
+        when(dishPersistencePort.findById(validDish.getId())).thenReturn(validDish);
+        when(dishPersistencePort.save(any(Dish.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        var result = dishUseCase.updateDishStatus(validDish.getId(), false, OWNER_ID);
+
+        var captor = ArgumentCaptor.forClass(Dish.class);
+        verify(dishPersistencePort).save(captor.capture());
+
+        assertThat(captor.getValue().getActive()).isFalse();
+        assertThat(result.getActive()).isFalse();
+    }
+
+    @Test
+    @DisplayName("Should enable a previously disabled dish")
+    void shouldEnableDish() {
+        validDish.setActive(false);
+
+        when(dishPersistencePort.findById(validDish.getId())).thenReturn(validDish);
+        when(dishPersistencePort.save(any(Dish.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        var result = dishUseCase.updateDishStatus(validDish.getId(), true, OWNER_ID);
+
+        assertThat(result.getActive()).isTrue();
     }
 }

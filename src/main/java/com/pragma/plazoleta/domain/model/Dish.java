@@ -1,6 +1,5 @@
 package com.pragma.plazoleta.domain.model;
 
-import com.pragma.plazoleta.domain.exception.dish.DishOwnershipException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -23,10 +22,4 @@ public class Dish {
 
     private Category category;
     private Restaurant restaurant;
-
-    public void checkOwnership(Long ownerId) {
-        if (!restaurant.getOwnerId().equals(ownerId)) {
-            throw new DishOwnershipException();
-        }
-    }
 }

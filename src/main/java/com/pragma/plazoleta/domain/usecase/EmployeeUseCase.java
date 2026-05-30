@@ -25,7 +25,7 @@ public class EmployeeUseCase implements IEmployeeServicePort {
             Long ownerId
     ) {
         var restaurant = resolveRestaurant(restaurantId);
-        validateOwnership(restaurant, ownerId);
+        restaurant.checkOwnership(ownerId);
 
         var userId = userInformationPort.createEmployee(userInformation);
         var restaurantEmployee = RestaurantEmployee.builder()
@@ -43,12 +43,5 @@ public class EmployeeUseCase implements IEmployeeServicePort {
         }
 
         return restaurant;
-    }
-
-    private void validateOwnership(Restaurant restaurant, Long ownerId) {
-        if (!restaurant.getOwnerId().equals(ownerId)) {
-
-            throw new UserIsNotOwnerException();
-        }
     }
 }
