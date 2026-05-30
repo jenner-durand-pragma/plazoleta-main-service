@@ -2,6 +2,7 @@ package com.pragma.plazoleta.application.handler;
 
 import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
 import com.pragma.plazoleta.application.dto.request.dish.UpdateDishRequestDto;
+import com.pragma.plazoleta.application.dto.request.dish.UpdateDishStatusRequestDto;
 import com.pragma.plazoleta.application.handler.impl.DishHandler;
 import com.pragma.plazoleta.application.mapper.IDishRequestMapper;
 import com.pragma.plazoleta.application.mapper.IDishResponseMapper;
@@ -112,17 +113,39 @@ class DishHandlerTest {
                 .price(20000)
                 .description("Change Description")
                 .build();
+        saved.setPrice(20000);
+        saved.setDescription("Change Description");
 
         when(dishServicePort.updateDish(
-                2L,
+                1L,
                 20000,
                 "Change Description",
                 OWNER_ID)
         ).thenReturn(saved);
 
-        var result = dishHandler.updateDish(2L, updateRequest, OWNER_ID);
+        var result = dishHandler.updateDish(1L, updateRequest, OWNER_ID);
 
-        verify(dishServicePort).updateDish(2L, 20000, "Change Description", OWNER_ID);
+        verify(dishServicePort).updateDish(1L, 20000, "Change Description", OWNER_ID);
+        verify(dishResponseMapper).toResponse(saved);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getPrice()).isEqualTo(20000);
+        assertThat(result.getDescription()).isEqualTo("Change Description");
+    }
+
+    @Test
+    @DisplayName("Should update dish status")
+    void shouldUpdateDishStatus() {
+        var updateStatusRequest = UpdateDishStatusRequestDto.builder()
+                .active(false)
+                .build();
+
+        when(dishServicePort.updateDishStatus(1L, false, OWNER_ID)).thenReturn(saved);
+
+        var result = dishHandler.updateDishStatus(1L, updateStatusRequest, OWNER_ID);
+
+        verify(dishServicePort).updateDishStatus(1L, false, OWNER_ID);
         verify(dishResponseMapper).toResponse(saved);
 
         assertThat(result).isNotNull();
