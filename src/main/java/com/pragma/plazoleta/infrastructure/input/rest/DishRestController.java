@@ -4,6 +4,7 @@ import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
 import com.pragma.plazoleta.application.dto.request.dish.UpdateDishRequestDto;
 import com.pragma.plazoleta.application.dto.response.dish.DishResponseDto;
 import com.pragma.plazoleta.application.handler.IDishHandler;
+import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsOwner;
 import com.pragma.plazoleta.infrastructure.configuration.security.token.dto.AuthenticatedUser;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.common.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
@@ -34,6 +35,7 @@ public class DishRestController {
 
     private final IDishHandler dishHandler;
 
+    @IsOwner
     @Operation(summary = "Create a dish",
             description = "Creates a new dish in a restaurant menu.")
     @ApiResponses(value = {
@@ -66,6 +68,7 @@ public class DishRestController {
         return new ResponseEntity<>(created, HttpStatus.CREATED);
     }
 
+    @IsOwner
     @Operation(summary = "Update a dish",
             description = "Updates only the price and description of a dish. ")
     @ApiResponses(value = {
