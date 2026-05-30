@@ -25,6 +25,9 @@ public class EmployeeHandler implements IEmployeeHandler {
             CreateEmployeeRequestDto request,
             Long ownerId
     ) {
-        return null;
+        var registration = requestMapper.toUserInformation(request);
+        var created = employeeServicePort.createEmployee(restaurantId, registration, ownerId);
+
+        return responseMapper.toResponse(created);
     }
 }
