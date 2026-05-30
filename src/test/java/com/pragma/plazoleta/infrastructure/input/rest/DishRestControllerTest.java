@@ -3,6 +3,7 @@ package com.pragma.plazoleta.infrastructure.input.rest;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
 import com.pragma.plazoleta.application.dto.request.dish.UpdateDishRequestDto;
+import com.pragma.plazoleta.application.dto.request.dish.UpdateDishStatusRequestDto;
 import com.pragma.plazoleta.application.dto.response.dish.DishResponseDto;
 import com.pragma.plazoleta.application.handler.IDishHandler;
 import com.pragma.plazoleta.infrastructure.configuration.SecurityConfiguration;
@@ -187,5 +188,48 @@ class DishRestControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(dishHandler, never()).updateDish(any(), any(), eq(2L));
+    }
+
+    @Test
+    @DisplayName("Should return 200 when dish status is updated successfully")
+    void shouldReturn200OnStatusUpdate() throws Exception {
+        var request = UpdateDishStatusRequestDto.builder()
+                .active(false)
+                .build();
+        var response = DishResponseDto.builder()
+                .id(1L)
+                .name("Pineapple Pizza")
+                .description("Change Description")
+                .price(20000)
+                .categoryName("Main Course")
+                .restaurantId(10L)
+                .imageUrl("https://dishes.example.com/dish.png")
+                .active(false)
+                .build();
+        when(dishHandler.updateDishStatus(eq(1L), any(UpdateDishStatusRequestDto.class), eq(2L)))
+                .thenReturn(response);
+
+        mockMvc.perform(patch("/api/v1/dishes/1/status")
+                        .with(authentication(userAuthentication))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.active").value(false));
+    }
+
+    @Test
+    @DisplayName("Should return 400 when active field is missing")
+    void shouldReturn400WhenActiveMissing() throws Exception {
+        var bad = UpdateDishStatusRequestDto.builder()
+                .active(null)
+                .build();
+
+        mockMvc.perform(patch("/api/v1/dishes/1/status")
+                        .with(authentication(userAuthentication))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bad)))
+                .andExpect(status().isBadRequest());
+
+        verify(dishHandler, never()).updateDishStatus(any(), any(), any());
     }
 }

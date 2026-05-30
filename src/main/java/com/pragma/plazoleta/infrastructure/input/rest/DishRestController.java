@@ -2,6 +2,7 @@ package com.pragma.plazoleta.infrastructure.input.rest;
 
 import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
 import com.pragma.plazoleta.application.dto.request.dish.UpdateDishRequestDto;
+import com.pragma.plazoleta.application.dto.request.dish.UpdateDishStatusRequestDto;
 import com.pragma.plazoleta.application.dto.response.dish.DishResponseDto;
 import com.pragma.plazoleta.application.handler.IDishHandler;
 import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsOwner;
@@ -98,5 +99,15 @@ public class DishRestController {
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
         return ResponseEntity.ok(dishHandler.updateDish(id, request, authenticatedUser.getUserId()));
+    }
+
+    @IsOwner
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<DishResponseDto> updateDishStatus(
+            @PathVariable Long id,
+            @Valid @RequestBody UpdateDishStatusRequestDto request,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return null;
     }
 }
