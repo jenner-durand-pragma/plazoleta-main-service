@@ -6,6 +6,10 @@ import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
@@ -35,6 +39,19 @@ public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
 
     @Override
     public PagedResult<Restaurant> findAllPaginatedByNameAsc(Integer page, Integer size) {
-        return null;
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        var restaurantPage = restaurantRepository.findAll(pageable);
+
+        var items = restaurantPage.getContent().stream()
+                .map(restaurantEntityMapper::toModel)
+                .collect(Collectors.toList());
+
+        return new PagedResult<>(
+                items,
+                restaurantPage.getNumber(),
+                restaurantPage.getSize(),
+                restaurantPage.getTotalElements(),
+                restaurantPage.getTotalPages()
+        );
     }
 }
