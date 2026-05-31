@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.api.IDishServicePort;
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.exception.category.CategoryNotFoundException;
 import com.pragma.plazoleta.domain.exception.dish.DishNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
@@ -56,6 +57,11 @@ public class DishUseCase implements IDishServicePort {
         dish.setActive(active);
 
         return dishPersistencePort.save(dish);
+    }
+
+    @Override
+    public PagedResult<Dish> listDishesByRestaurant(Long restaurantId, Long categoryId, Integer page, Integer size) {
+        return null;
     }
 
     private Category resolveCategory(Long categoryId) {
