@@ -25,9 +25,9 @@ public class DishHandler implements IDishHandler {
 
     @Override
     @Transactional
-    public DishResponseDto createDish(CreateDishRequestDto request, Long ownerId) {
+    public DishResponseDto createDish(Long restaurantId, CreateDishRequestDto request, Long ownerId) {
         var dishToCreate = dishRequestMapper.toDish(request);
-        var dishCreated = dishServicePort.createDish(dishToCreate, ownerId);
+        var dishCreated = dishServicePort.createDish(restaurantId, dishToCreate, ownerId);
 
         return dishResponseMapper.toResponse(dishCreated);
     }

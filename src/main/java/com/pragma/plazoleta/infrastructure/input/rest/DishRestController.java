@@ -1,6 +1,5 @@
 package com.pragma.plazoleta.infrastructure.input.rest;
 
-import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
 import com.pragma.plazoleta.application.dto.request.dish.UpdateDishRequestDto;
 import com.pragma.plazoleta.application.dto.request.dish.UpdateDishStatusRequestDto;
 import com.pragma.plazoleta.application.dto.response.dish.DishResponseDto;
@@ -15,13 +14,11 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -35,39 +32,6 @@ import javax.validation.Valid;
 public class DishRestController {
 
     private final IDishHandler dishHandler;
-
-    @IsOwner
-    @Operation(summary = "Create a dish",
-            description = "Creates a new dish in a restaurant menu.")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Dish created successfully",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = DishResponseDto.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid input data",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "401", description = "Authentication required",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "403", description = "Caller is not an OWNER",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "404", description = "Category or restaurant not found",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class))),
-            @ApiResponse(responseCode = "422", description = "User does not own the restaurant",
-                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = ErrorResponse.class)))
-    })
-    @PostMapping
-    public ResponseEntity<DishResponseDto> createDish(
-            @Valid @RequestBody CreateDishRequestDto request,
-            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
-    ) {
-        var created = dishHandler.createDish(request, authenticatedUser.getUserId());
-
-        return new ResponseEntity<>(created, HttpStatus.CREATED);
-    }
 
     @IsOwner
     @Operation(summary = "Update a dish",

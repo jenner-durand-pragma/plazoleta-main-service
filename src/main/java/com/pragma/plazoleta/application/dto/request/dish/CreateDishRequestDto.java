@@ -42,9 +42,4 @@ public class CreateDishRequestDto {
     @Positive(message = "Category id must be positive")
     @Schema(description = "Id of an existing category", example = "1")
     private Long categoryId;
-
-    @NotNull(message = "Restaurant id is required")
-    @Positive(message = "Restaurant id must be positive")
-    @Schema(description = "Id of the restaurant where the dish will be served", example = "10")
-    private Long restaurantId;
 }

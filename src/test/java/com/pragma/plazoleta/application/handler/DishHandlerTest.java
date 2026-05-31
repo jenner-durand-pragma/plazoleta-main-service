@@ -49,6 +49,7 @@ class DishHandlerTest {
     private Dish savedDish;
 
     private static final Long OWNER_ID = 2L;
+    private static final Long RESTAURANT_ID = 10L;
 
     @BeforeEach
     void setUp() {
@@ -57,7 +58,6 @@ class DishHandlerTest {
                 .description("Classic Hawaiian pizza featuring a perfect balance of sweet juicy pineapple chunks")
                 .price(15000)
                 .categoryId(1L)
-                .restaurantId(10L)
                 .imageUrl("https://dishes.example.com/dish.png")
                 .build();
 
@@ -87,20 +87,19 @@ class DishHandlerTest {
     @Test
     @DisplayName("Should create dish successfully when data is valid in create dish")
     void shouldCreateDishSuccessfullyWhenDataIsValidInCreateDish() {
-        when(dishServicePort.createDish(any(Dish.class), eq(2L))).thenReturn(savedDish);
+        when(dishServicePort.createDish(eq(RESTAURANT_ID), any(Dish.class), eq(2L))).thenReturn(savedDish);
 
-        var result = dishHandler.createDish(requestDto, OWNER_ID);
+        var result = dishHandler.createDish(RESTAURANT_ID, requestDto, OWNER_ID);
 
         var dishCaptor = ArgumentCaptor.forClass(Dish.class);
-        verify(dishServicePort).createDish(dishCaptor.capture(), eq(OWNER_ID));
+        verify(dishServicePort).createDish(eq(RESTAURANT_ID), dishCaptor.capture(), eq(OWNER_ID));
         var passedDish = dishCaptor.getValue();
 
         assertThat(passedDish.getName()).isEqualTo("Pineapple Pizza");
         assertThat(passedDish.getPrice()).isEqualTo(15000);
         assertThat(passedDish.getCategory().getId()).isEqualTo(1L);
-        assertThat(passedDish.getRestaurant().getId()).isEqualTo(10L);
 
-        verify(dishServicePort).createDish(any(Dish.class), eq(2L));
+        verify(dishServicePort).createDish(eq(RESTAURANT_ID), any(Dish.class), eq(2L));
         verify(dishRequestMapper).toDish(requestDto);
         verify(dishResponseMapper).toResponse(savedDish);
 

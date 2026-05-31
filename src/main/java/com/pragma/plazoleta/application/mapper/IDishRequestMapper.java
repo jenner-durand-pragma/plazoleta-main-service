@@ -15,6 +15,5 @@ public interface IDishRequestMapper {
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "active", ignore = true)
     @Mapping(target = "category.id", source = "categoryId")
-    @Mapping(target = "restaurant.id", source = "restaurantId")
     Dish toDish(CreateDishRequestDto dto);
 }

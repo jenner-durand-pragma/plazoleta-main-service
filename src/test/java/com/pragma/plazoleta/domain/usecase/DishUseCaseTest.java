@@ -51,6 +51,7 @@ class DishUseCaseTest {
     private Restaurant restaurant;
 
     private static final Long OWNER_ID = 2L;
+    private static final Long RESTAURANT_ID = 10L;
 
     @BeforeEach
     void setUp() {
@@ -86,7 +87,7 @@ class DishUseCaseTest {
         when(dishPersistencePort.save(any(Dish.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        var result = dishUseCase.createDish(validDish, OWNER_ID);
+        var result = dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID);
 
         var captor = ArgumentCaptor.forClass(Dish.class);
         verify(dishPersistencePort).save(captor.capture());
@@ -102,7 +103,7 @@ class DishUseCaseTest {
     void shouldThrowWhenCategoryDoesNotExistInCreateDish() {
         when(categoryPersistencePort.findById(1L)).thenReturn(null);
 
-        assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
+        assertThatThrownBy(() -> dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID))
                 .isInstanceOf(CategoryNotFoundException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
@@ -114,7 +115,7 @@ class DishUseCaseTest {
         when(categoryPersistencePort.findById(1L)).thenReturn(mainCourse);
         when(restaurantPersistencePort.findById(10L)).thenReturn(null);
 
-        assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
+        assertThatThrownBy(() -> dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID))
                 .isInstanceOf(RestaurantNotFoundException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
@@ -130,7 +131,7 @@ class DishUseCaseTest {
         when(categoryPersistencePort.findById(1L)).thenReturn(mainCourse);
         when(restaurantPersistencePort.findById(10L)).thenReturn(otherOwnerRestaurant);
 
-        assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
+        assertThatThrownBy(() -> dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID))
                 .isInstanceOf(RestaurantOwnershipException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
