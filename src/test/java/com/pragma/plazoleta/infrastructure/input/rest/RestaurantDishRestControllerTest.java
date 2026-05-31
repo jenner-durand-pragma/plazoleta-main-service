@@ -2,6 +2,8 @@ package com.pragma.plazoleta.infrastructure.input.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
+import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
+import com.pragma.plazoleta.application.dto.response.dish.DishListItemResponseDto;
 import com.pragma.plazoleta.application.dto.response.dish.DishResponseDto;
 import com.pragma.plazoleta.application.handler.IDishHandler;
 import com.pragma.plazoleta.infrastructure.configuration.SecurityConfiguration;
@@ -31,6 +33,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -56,7 +59,9 @@ class RestaurantDishRestControllerTest {
 
     private ObjectMapper objectMapper;
     private CreateDishRequestDto validRequest;
+
     private UsernamePasswordAuthenticationToken ownerAuthentication;
+    private UsernamePasswordAuthenticationToken clientAuthentication;
 
     @BeforeEach
     void setUp() {
@@ -76,6 +81,13 @@ class RestaurantDishRestControllerTest {
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_OWNER"))
         );
+
+         var clientPrincipal = new AuthenticatedUser(5L, "client@plazoleta.com", "CLIENT");
+         clientAuthentication = new UsernamePasswordAuthenticationToken(
+                 clientPrincipal,
+                 null,
+                 List.of(new SimpleGrantedAuthority("ROLE_CLIENT"))
+         );
     }
 
     @Test
@@ -143,5 +155,60 @@ class RestaurantDishRestControllerTest {
                 .andExpect(status().isBadRequest());
 
         verify(dishHandler, never()).createDish(any(), any(), any());
+    }
+
+    @Test
+    @DisplayName("Should return 200 OK with paged dishes when CLIENT requests the list in list dishes")
+    void shouldReturn200OkWithPagedDishesWhenClientRequestsTheListInListDishes() throws Exception {
+        var items = List.of(
+                DishListItemResponseDto.builder()
+                        .id(1L)
+                        .name("Pineapple Pizza")
+                        .description("Classic Hawaiian pizza featuring a perfect balance of sweet juicy pineapple chunks")
+                        .price(15000)
+                        .imageUrl("https://dishes.example.com/dish.png")
+                        .categoryName("Main Course")
+                        .build()
+        );
+        var paged = new PagedResponseDto<>(items, 0, 10, 1L, 1);
+
+        when(dishHandler.listDishesByRestaurant(10L, 1L, 0, 10)).thenReturn(paged);
+
+        mockMvc.perform(get("/api/v1/restaurants/10/dishes")
+                        .with(authentication(clientAuthentication))
+                        .param("categoryId", "1")
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].name").value("Pineapple Pizza"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    @DisplayName("Should use default pagination and null category when query params are omitted in list dishes")
+    void shouldUseDefaultPaginationAndNullCategoryWhenQueryParamsAreOmittedInListDishes() throws Exception {
+        var items = List.of(
+                DishListItemResponseDto.builder()
+                        .id(1L)
+                        .name("Pineapple Pizza")
+                        .description("Classic Hawaiian pizza featuring a perfect balance of sweet juicy pineapple chunks")
+                        .price(15000)
+                        .imageUrl("https://dishes.example.com/dish.png")
+                        .categoryName("Main Course")
+                        .build()
+        );
+        var paged = new PagedResponseDto<>(items, 0, 10, 1L, 1);
+
+        when(dishHandler.listDishesByRestaurant(10L, null, 0, 10)).thenReturn(paged);
+
+        mockMvc.perform(get("/api/v1/restaurants/10/dishes")
+                        .with(authentication(clientAuthentication)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(1))
+                .andExpect(jsonPath("$.items[0].name").value("Pineapple Pizza"))
+                .andExpect(jsonPath("$.totalElements").value(1));
+
+        verify(dishHandler).listDishesByRestaurant(10L, null, 0, 10);
     }
 }
