@@ -71,11 +71,27 @@ public class RestaurantRestController {
     }
 
     @IsClient
+    @Operation(summary = "List restaurants",
+            description = "Returns restaurants paginated and ordered alphabetically by name.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Paged list of restaurants",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = PagedResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Caller is not a CLIENT",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Invalid pagination parameters",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     public ResponseEntity<PagedResponseDto<RestaurantListItemResponseDto>> listRestaurants(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size
+            @RequestParam(defaultValue = "0") Integer page,
+            @RequestParam(defaultValue = "10") Integer size
     ) {
-        return null;
+        return ResponseEntity.ok(restaurantHandler.listRestaurants(page, size));
     }
 }
