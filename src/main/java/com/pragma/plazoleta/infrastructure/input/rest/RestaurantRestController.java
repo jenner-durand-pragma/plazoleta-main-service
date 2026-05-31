@@ -1,9 +1,12 @@
 package com.pragma.plazoleta.infrastructure.input.rest;
 
 import com.pragma.plazoleta.application.dto.request.restaurant.CreateRestaurantRequestDto;
+import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
+import com.pragma.plazoleta.application.dto.response.restaurant.RestaurantListItemResponseDto;
 import com.pragma.plazoleta.application.dto.response.restaurant.RestaurantResponseDto;
 import com.pragma.plazoleta.application.handler.IRestaurantHandler;
 import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsAdmin;
+import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsClient;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.common.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -15,9 +18,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import javax.validation.Valid;
@@ -63,5 +68,14 @@ public class RestaurantRestController {
         var created = restaurantHandler.createRestaurant(request);
 
         return new ResponseEntity<>(created, HttpStatus.CREATED);
+    }
+
+    @IsClient
+    @GetMapping
+    public ResponseEntity<PagedResponseDto<RestaurantListItemResponseDto>> listRestaurants(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size
+    ) {
+        return null;
     }
 }

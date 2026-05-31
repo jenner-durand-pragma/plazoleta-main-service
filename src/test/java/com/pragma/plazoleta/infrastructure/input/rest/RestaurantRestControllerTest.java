@@ -2,6 +2,8 @@ package com.pragma.plazoleta.infrastructure.input.rest;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.application.dto.request.restaurant.CreateRestaurantRequestDto;
+import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
+import com.pragma.plazoleta.application.dto.response.restaurant.RestaurantListItemResponseDto;
 import com.pragma.plazoleta.application.dto.response.restaurant.RestaurantResponseDto;
 import com.pragma.plazoleta.application.handler.IRestaurantHandler;
 import com.pragma.plazoleta.infrastructure.configuration.SecurityConfiguration;
@@ -32,6 +34,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -57,7 +60,8 @@ class RestaurantRestControllerTest {
 
     private ObjectMapper objectMapper;
     private CreateRestaurantRequestDto validRequest;
-    private UsernamePasswordAuthenticationToken userAuthentication;
+    private UsernamePasswordAuthenticationToken adminAuthentication;
+    private UsernamePasswordAuthenticationToken clientAuthentication;
 
     @BeforeEach
     void setUp() {
@@ -71,17 +75,24 @@ class RestaurantRestControllerTest {
                 .nit("9001234567")
                 .build();
 
-        var principal = new AuthenticatedUser(2L, "jenner.durand@plazoleta.com", "ADMIN");
-        userAuthentication = new UsernamePasswordAuthenticationToken(
-                principal,
+        var adminPrincipal = new AuthenticatedUser(2L, "jenner.durand@plazoleta.com", "ADMIN");
+        adminAuthentication = new UsernamePasswordAuthenticationToken(
+                adminPrincipal,
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_ADMIN"))
+        );
+
+        var clientPrincipal = new AuthenticatedUser(5L, "client@plazoleta.com", "CLIENT");
+        clientAuthentication = new UsernamePasswordAuthenticationToken(
+                clientPrincipal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_CLIENT"))
         );
     }
 
     @Test
-    @DisplayName("Should return 201 when restaurant data is valid")
-    void shouldReturn201() throws Exception {
+    @DisplayName("Should return 201 Created when restaurant data is valid in create restaurant")
+    void shouldReturn201CreatedWhenRestaurantDataIsValidInCreateRestaurant() throws Exception {
         var response = RestaurantResponseDto.builder()
                 .id(1L)
                 .name("Pizza Place")
@@ -94,7 +105,7 @@ class RestaurantRestControllerTest {
         when(restaurantHandler.createRestaurant(any())).thenReturn(response);
 
         mockMvc.perform(post("/api/v1/restaurants")
-                        .with(authentication(userAuthentication))
+                        .with(authentication(adminAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isCreated())
@@ -103,12 +114,12 @@ class RestaurantRestControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 400 when NIT is not numeric")
-    void shouldReturn400WhenNitNotNumeric() throws Exception {
+    @DisplayName("Should return 400 Bad Request when NIT is not numeric in create restaurant")
+    void shouldReturn400BadRequestWhenNitIsNotNumericInCreateRestaurant() throws Exception {
         validRequest.setNit("ABC123");
 
         mockMvc.perform(post("/api/v1/restaurants")
-                        .with(authentication(userAuthentication))
+                        .with(authentication(adminAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isBadRequest());
@@ -117,12 +128,12 @@ class RestaurantRestControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 400 when name contains only numbers")
-    void shouldReturn400WhenNameOnlyNumbers() throws Exception {
+    @DisplayName("Should return 400 Bad Request when name contains only numbers in create restaurant")
+    void shouldReturn400BadRequestWhenNameContainsOnlyNumbersInCreateRestaurant() throws Exception {
         validRequest.setName("12345");
 
         mockMvc.perform(post("/api/v1/restaurants")
-                        .with(authentication(userAuthentication))
+                        .with(authentication(adminAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isBadRequest());
@@ -131,13 +142,13 @@ class RestaurantRestControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 503 when a required external service fails (FeignException)")
-    void shouldReturn503WhenExternalServiceFails() throws Exception {
+    @DisplayName("Should return 503 Service Unavailable when a required external service fails in create restaurant")
+    void shouldReturn503ServiceUnavailableWhenExternalServiceFailsInCreateRestaurant() throws Exception {
         var feignExceptionMock = mock(FeignException.class);
         when(restaurantHandler.createRestaurant(any())).thenThrow(feignExceptionMock);
 
         mockMvc.perform(post("/api/v1/restaurants")
-                        .with(authentication(userAuthentication))
+                        .with(authentication(adminAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isServiceUnavailable())
@@ -148,12 +159,12 @@ class RestaurantRestControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 400 when phone format is invalid (contains letters)")
-    void shouldReturn400WhenPhoneInvalid() throws Exception {
+    @DisplayName("Should return 400 Bad Request when phone format is invalid in create restaurant")
+    void shouldReturn400BadRequestWhenPhoneFormatIsInvalidInCreateRestaurant() throws Exception {
         validRequest.setPhone("+57300A5698");
 
         mockMvc.perform(post("/api/v1/restaurants")
-                        .with(authentication(userAuthentication))
+                        .with(authentication(adminAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isBadRequest());
@@ -162,16 +173,49 @@ class RestaurantRestControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 400 when ownerId is null")
-    void shouldReturn400WhenOwnerIdIsNull() throws Exception {
+    @DisplayName("Should return 400 Bad Request when ownerId is null in create restaurant")
+    void shouldReturn400BadRequestWhenOwnerIdIsNullInCreateRestaurant() throws Exception {
         validRequest.setOwnerId(null);
 
         mockMvc.perform(post("/api/v1/restaurants")
-                        .with(authentication(userAuthentication))
+                        .with(authentication(adminAuthentication))
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(validRequest)))
                 .andExpect(status().isBadRequest());
 
         verify(restaurantHandler, never()).createRestaurant(any());
+    }
+
+    @Test
+    @DisplayName("Should return 200 OK with paged restaurants when CLIENT requests the list in list restaurants")
+    void shouldReturn200OkWithPagedRestaurantsWhenClientRequestsTheListInListRestaurants() throws Exception {
+        var items = List.of(
+                new RestaurantListItemResponseDto(1L, "Andina", "http://a.png"),
+                new RestaurantListItemResponseDto(2L, "Burger", "http://b.png")
+        );
+        var paged = new PagedResponseDto<>(items, 0, 10, 2L, 1);
+        when(restaurantHandler.listRestaurants(0, 10)).thenReturn(paged);
+
+        mockMvc.perform(get("/api/v1/restaurants")
+                        .with(authentication(clientAuthentication))
+                        .param("page", "0")
+                        .param("size", "10"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.items.length()").value(2))
+                .andExpect(jsonPath("$.items[0].name").value("Andina"))
+                .andExpect(jsonPath("$.totalElements").value(2));
+    }
+
+    @Test
+    @DisplayName("Should use default page zero and size ten when query params are omitted in list restaurants")
+    void shouldUseDefaultPageZeroAndSizeTenWhenQueryParamsAreOmittedInListRestaurants() throws Exception {
+        when(restaurantHandler.listRestaurants(0, 10))
+                .thenReturn(new PagedResponseDto<>(List.of(), 0, 10, 0L, 0));
+
+        mockMvc.perform(get("/api/v1/restaurants")
+                        .with(authentication(clientAuthentication)))
+                .andExpect(status().isOk());
+
+        verify(restaurantHandler).listRestaurants(0, 10);
     }
 }
