@@ -74,6 +74,25 @@ public class RestaurantDishRestController {
     }
 
     @IsClient
+    @Operation(summary = "List dishes of a restaurant",
+            description = "Returns active dishes of a restaurant, paginated and ordered.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Paged list of dishes",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = PagedResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Caller is not a CLIENT",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Restaurant or category not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Invalid pagination parameters",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @GetMapping
     public ResponseEntity<PagedResponseDto<DishListItemResponseDto>> listDishes(
             @PathVariable Long restaurantId,
@@ -81,6 +100,8 @@ public class RestaurantDishRestController {
             @RequestParam(defaultValue = "0") Integer page,
             @RequestParam(defaultValue = "10") Integer size
     ) {
-        return null;
+        return ResponseEntity.ok(
+                dishHandler.listDishesByRestaurant(restaurantId, categoryId, page, size)
+        );
     }
 }
