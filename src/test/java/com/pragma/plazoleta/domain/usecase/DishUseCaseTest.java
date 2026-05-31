@@ -1,6 +1,8 @@
 package com.pragma.plazoleta.domain.usecase;
 
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.exception.category.CategoryNotFoundException;
+import com.pragma.plazoleta.domain.exception.common.InvalidPaginationException;
 import com.pragma.plazoleta.domain.exception.dish.DishNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantOwnershipException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
@@ -19,9 +21,12 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -46,6 +51,7 @@ class DishUseCaseTest {
     private Restaurant restaurant;
 
     private static final Long OWNER_ID = 2L;
+    private static final Long RESTAURANT_ID = 10L;
 
     @BeforeEach
     void setUp() {
@@ -81,7 +87,7 @@ class DishUseCaseTest {
         when(dishPersistencePort.save(any(Dish.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        var result = dishUseCase.createDish(validDish, OWNER_ID);
+        var result = dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID);
 
         var captor = ArgumentCaptor.forClass(Dish.class);
         verify(dishPersistencePort).save(captor.capture());
@@ -97,7 +103,7 @@ class DishUseCaseTest {
     void shouldThrowWhenCategoryDoesNotExistInCreateDish() {
         when(categoryPersistencePort.findById(1L)).thenReturn(null);
 
-        assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
+        assertThatThrownBy(() -> dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID))
                 .isInstanceOf(CategoryNotFoundException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
@@ -109,7 +115,7 @@ class DishUseCaseTest {
         when(categoryPersistencePort.findById(1L)).thenReturn(mainCourse);
         when(restaurantPersistencePort.findById(10L)).thenReturn(null);
 
-        assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
+        assertThatThrownBy(() -> dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID))
                 .isInstanceOf(RestaurantNotFoundException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
@@ -125,7 +131,7 @@ class DishUseCaseTest {
         when(categoryPersistencePort.findById(1L)).thenReturn(mainCourse);
         when(restaurantPersistencePort.findById(10L)).thenReturn(otherOwnerRestaurant);
 
-        assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
+        assertThatThrownBy(() -> dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID))
                 .isInstanceOf(RestaurantOwnershipException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
@@ -254,5 +260,58 @@ class DishUseCaseTest {
         var result = dishUseCase.updateDishStatus(validDish.getId(), true, OWNER_ID);
 
         assertThat(result.getActive()).isTrue();
+    }
+
+    @Test
+    @DisplayName("Should return paginated dishes filtered when data is valid in list dishes by restaurant")
+    void shouldReturnPaginatedDishesFilteredWhenDataIsValidInListDishesByRestaurant() {
+        var paged = PagedResult.of(List.of(validDish), 0, 10, 1L, 1);
+
+        when(restaurantPersistencePort.findById(restaurant.getId()))
+                .thenReturn(restaurant);
+        when(dishPersistencePort.findActiveByRestaurantAndCategoryPaginated(
+                restaurant.getId(), mainCourse.getId(), 0, 10)
+        ).thenReturn(paged);
+
+        var result = dishUseCase.listDishesByRestaurant(restaurant.getId(), mainCourse.getId(), 0, 10);
+
+        assertThat(result.getItems()).hasSize(1);
+        assertThat(result.getItems().get(0).getCategory().getId()).isEqualTo(mainCourse.getId());
+    }
+
+    @Test
+    @DisplayName("Should throw RestaurantNotFoundException when restaurant does not exist in list dishes by restaurant")
+    void shouldThrowRestaurantNotFoundExceptionWhenRestaurantDoesNotExistInListDishesByRestaurant() {
+        when(restaurantPersistencePort.findById(10L)).thenReturn(null);
+
+        assertThatThrownBy(() -> dishUseCase.listDishesByRestaurant(
+                10L,
+                null,
+                0,
+                10)
+        ).isInstanceOf(RestaurantNotFoundException.class);
+
+        verify(dishPersistencePort, never())
+                .findActiveByRestaurantAndCategoryPaginated(any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidPaginationException when page is negative in list dishes by restaurant")
+    void shouldThrowInvalidPaginationExceptionWhenPageIsNegativeInListDishesByRestaurant() {
+        assertThatThrownBy(() -> dishUseCase.listDishesByRestaurant(10L, null, -1, 10))
+                .isInstanceOf(InvalidPaginationException.class);
+
+        verify(restaurantPersistencePort, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidPaginationException when size exceeds max page size in list dishes by restaurant")
+    void shouldThrowInvalidPaginationExceptionWhenSizeExceedsMaxPageSizeInListDishesByRestaurant() {
+        assertThatThrownBy(() -> dishUseCase.listDishesByRestaurant(
+                10L,
+                null,
+                0,
+                101)
+        ).isInstanceOf(InvalidPaginationException.class);
     }
 }

@@ -12,12 +12,12 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class DishResponseDto {
+public class DishListItemResponseDto {
 
-    @Schema(description = "Generated dish id", example = "1")
+    @Schema(description = "Dish id", example = "1")
     private Long id;
 
-    @Schema(description = "Dish display name", example = "Pineapple Pizza")
+    @Schema(description = "Dish name", example = "Pineapple Pizza")
     private String name;
 
     @Schema(
@@ -26,18 +26,12 @@ public class DishResponseDto {
     )
     private String description;
 
-    @Schema(description = "Price as a positive integer", example = "15000")
+    @Schema(description = "Dish price", example = "15000")
     private Integer price;
 
     @Schema(description = "Public URL of the dish image", example = "https://dishes.example.com/dish.png")
     private String imageUrl;
 
-    @Schema(description = "Category name", example = "Main Course")
+    @Schema(description = "Dish category name", example = "Main Course")
     private String categoryName;
-
-    @Schema(description = "Restaurant id", example = "10")
-    private Long restaurantId;
-
-    @Schema(description = "Whether the dish is active", example = "true")
-    private Boolean active;
 }

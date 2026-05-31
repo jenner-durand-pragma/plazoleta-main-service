@@ -99,4 +99,109 @@ class DishJpaAdapterTest {
         assertThat(dishJpaAdapter.findById(saved.getId())).isNotNull();
         assertThat(dishJpaAdapter.findById(10L)).isNull();
     }
+
+    @Test
+    @DisplayName(
+            "Should return paginated active dishes sorted by name ascending when " +
+            "category is provided in find active by restaurant and category paginated"
+    )
+    void shouldReturnPaginatedActiveDishesInFindActiveByRestaurantAndCategoryPaginated() {
+        var baseDish = dishJpaAdapter.save(buildDish());
+        var restaurant = baseDish.getRestaurant();
+        var category = baseDish.getCategory();
+
+        dishJpaAdapter.save(Dish.builder()
+                .name("Apple Pizza")
+                .description("Delicious apple pizza")
+                .price(12000)
+                .category(category)
+                .restaurant(restaurant)
+                .imageUrl("https://dishes.example.com/apple.png")
+                .active(true)
+                .build());
+
+        dishJpaAdapter.save(Dish.builder()
+                .name("Banana Pizza")
+                .description("Inactive banana pizza")
+                .price(10000)
+                .category(category)
+                .restaurant(restaurant)
+                .imageUrl("https://dishes.example.com/banana.png")
+                .active(false)
+                .build());
+
+        var result = dishJpaAdapter.findActiveByRestaurantAndCategoryPaginated(
+                restaurant.getId(), category.getId(), 0, 10
+        );
+
+        assertThat(result).isNotNull();
+        assertThat(result.getItems()).hasSize(2);
+        assertThat(result.getItems().get(0).getName()).isEqualTo("Apple Pizza");
+        assertThat(result.getItems().get(1).getName()).isEqualTo("Pineapple Pizza");
+        assertThat(result.getPage()).isZero();
+        assertThat(result.getSize()).isEqualTo(10);
+        assertThat(result.getTotalElements()).isEqualTo(2L);
+        assertThat(result.getTotalPages()).isEqualTo(1);
+    }
+
+    @Test
+    @DisplayName(
+            "Should return paginated active dishes sorted by name ascending when " +
+            "category is null in find active by restaurant and category paginated"
+    )
+    void shouldReturnPaginatedDishesWhenCategoryIsNullInFindActiveByRestaurantAndCategoryPaginated() {
+        var baseDish = dishJpaAdapter.save(buildDish());
+        var restaurant = baseDish.getRestaurant();
+
+        var newCategoryEntity = categoryRepository.save(categoryEntityMapper.toEntity(
+                Category.builder()
+                        .id(3L)
+                        .name("Desserts")
+                        .description("Sweet dishes")
+                        .build()
+        ));
+        var newCategory = categoryEntityMapper.toModel(newCategoryEntity);
+
+        dishJpaAdapter.save(Dish.builder()
+                .name("Apple Pie")
+                .description("Sweet apple pie")
+                .price(8000)
+                .category(newCategory)
+                .restaurant(restaurant)
+                .imageUrl("https://dishes.example.com/pie.png")
+                .active(true)
+                .build());
+
+        var result = dishJpaAdapter.findActiveByRestaurantAndCategoryPaginated(
+                restaurant.getId(), null, 0, 10
+        );
+
+        assertThat(result).isNotNull();
+        assertThat(result.getItems()).hasSize(2);
+        assertThat(result.getItems().get(0).getName()).isEqualTo("Apple Pie");
+        assertThat(result.getItems().get(1).getName()).isEqualTo("Pineapple Pizza");
+        assertThat(result.getTotalElements()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName(
+            "Should return empty paged result when " +
+            "no active dishes match in find active by restaurant and category paginated"
+    )
+    void shouldReturnEmptyPagedResultWhenNoActiveDishesMatchInFindActiveByRestaurantAndCategoryPaginated() {
+        var baseDish = buildDish();
+        baseDish.setActive(false);
+        var savedDish = dishJpaAdapter.save(baseDish);
+
+        var result = dishJpaAdapter.findActiveByRestaurantAndCategoryPaginated(
+                savedDish.getRestaurant().getId(), savedDish.getCategory().getId(), 0, 10
+        );
+
+        assertThat(result).isNotNull();
+        assertThat(result.getItems()).isEmpty();
+        assertThat(result.getPage()).isZero();
+        assertThat(result.getSize()).isEqualTo(10);
+        assertThat(result.getTotalElements()).isZero();
+        assertThat(result.getTotalPages()).isZero();
+    }
 }

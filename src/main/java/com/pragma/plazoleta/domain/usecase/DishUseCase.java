@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.api.IDishServicePort;
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.exception.category.CategoryNotFoundException;
 import com.pragma.plazoleta.domain.exception.dish.DishNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
@@ -20,9 +21,9 @@ public class DishUseCase implements IDishServicePort {
     private final ICategoryPersistencePort categoryPersistencePort;
 
     @Override
-    public Dish createDish(Dish dish, Long ownerId) {
+    public Dish createDish(Long restaurantId, Dish dish, Long ownerId) {
         var category = resolveCategory(dish.getCategory().getId());
-        var restaurant = resolveRestaurant(dish.getRestaurant().getId());
+        var restaurant = resolveRestaurant(restaurantId);
         restaurant.checkOwnership(ownerId);
 
         dish.setCategory(category);
@@ -56,6 +57,20 @@ public class DishUseCase implements IDishServicePort {
         dish.setActive(active);
 
         return dishPersistencePort.save(dish);
+    }
+
+    @Override
+    public PagedResult<Dish> listDishesByRestaurant(Long restaurantId, Long categoryId, Integer page, Integer size) {
+        PagedResult.validatePagination(page, size);
+
+        var restaurant = resolveRestaurant(restaurantId);
+
+        return dishPersistencePort.findActiveByRestaurantAndCategoryPaginated(
+                restaurant.getId(),
+                categoryId,
+                page,
+                size
+        );
     }
 
     private Category resolveCategory(Long categoryId) {

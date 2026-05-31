@@ -1,10 +1,15 @@
 package com.pragma.plazoleta.infrastructure.out.jpa.adapter;
 
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IDishEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IDishRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class DishJpaAdapter implements IDishPersistencePort {
@@ -25,5 +30,30 @@ public class DishJpaAdapter implements IDishPersistencePort {
         return dishRepository.findById(id)
                 .map(dishEntityMapper::toModel)
                 .orElse(null);
+    }
+
+    @Override
+    public PagedResult<Dish> findActiveByRestaurantAndCategoryPaginated(
+            Long restaurantId,
+            Long categoryId,
+            Integer page,
+            Integer size
+    ) {
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "name"));
+        var dishPage = (categoryId == null)
+                ? dishRepository.findByRestaurantIdAndActiveTrue(restaurantId, pageable)
+                : dishRepository.findByRestaurantIdAndCategoryIdAndActiveTrue(restaurantId, categoryId, pageable);
+
+        var items = dishPage.getContent().stream()
+                .map(dishEntityMapper::toModel)
+                .collect(Collectors.toList());
+
+        return PagedResult.of(
+                items,
+                dishPage.getNumber(),
+                dishPage.getSize(),
+                dishPage.getTotalElements(),
+                dishPage.getTotalPages()
+        );
     }
 }
