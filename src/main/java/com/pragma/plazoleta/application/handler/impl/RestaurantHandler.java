@@ -32,6 +32,9 @@ public class RestaurantHandler implements IRestaurantHandler {
 
     @Override
     public PagedResponseDto<RestaurantListItemResponseDto> listRestaurants(Integer page, Integer size) {
-        return null;
+        var paged = restaurantServicePort.listRestaurants(page, size);
+        var pagedMapped = paged.mapTo(restaurantResponseMapper::toListItem);
+
+        return PagedResponseDto.from(pagedMapped);
     }
 }
