@@ -1,6 +1,8 @@
 package com.pragma.plazoleta.application.handler.impl;
 
 import com.pragma.plazoleta.application.dto.request.restaurant.CreateRestaurantRequestDto;
+import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
+import com.pragma.plazoleta.application.dto.response.restaurant.RestaurantListItemResponseDto;
 import com.pragma.plazoleta.application.dto.response.restaurant.RestaurantResponseDto;
 import com.pragma.plazoleta.application.handler.IRestaurantHandler;
 import com.pragma.plazoleta.application.mapper.IRestaurantRequestMapper;
@@ -26,5 +28,10 @@ public class RestaurantHandler implements IRestaurantHandler {
         var restaurantCreated = restaurantServicePort.createRestaurant(restaurantToCreate);
 
         return restaurantResponseMapper.toResponse(restaurantCreated);
+    }
+
+    @Override
+    public PagedResponseDto<RestaurantListItemResponseDto> listRestaurants(Integer page, Integer size) {
+        return null;
     }
 }
