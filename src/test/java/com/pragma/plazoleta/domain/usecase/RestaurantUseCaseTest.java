@@ -1,5 +1,7 @@
 package com.pragma.plazoleta.domain.usecase;
 
+import com.pragma.plazoleta.domain.common.PagedResult;
+import com.pragma.plazoleta.domain.exception.common.InvalidPaginationException;
 import com.pragma.plazoleta.domain.exception.restaurant.NitAlreadyExistsException;
 import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
 import com.pragma.plazoleta.domain.model.Restaurant;
@@ -13,6 +15,8 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -117,5 +121,73 @@ class RestaurantUseCaseTest {
                 .isInstanceOf(NitAlreadyExistsException.class);
 
         verify(restaurantPersistencePort, never()).save(any(Restaurant.class));
+    }
+
+    @Test
+    @DisplayName(
+            "Should return paginated restaurants ordered alphabetically " +
+            "when parameters are valid in list restaurants"
+    )
+    void shouldReturnPaginatedRestaurantsSuccessfullyWhenParametersAreValidInListRestaurants() {
+        var r1 = Restaurant.builder()
+                .name("Casa Andina")
+                .build();
+        var r2 = Restaurant.builder()
+                .name("Burger King")
+                .build();
+        var paged = PagedResult.of(List.of(r1, r2), 0, 10, 2L, 1);
+
+        when(restaurantPersistencePort.findAllPaginatedByNameAsc(0, 10)).thenReturn(paged);
+
+        var result = restaurantUseCase.listRestaurants(0, 10);
+
+        assertThat(result.getItems()).hasSize(2);
+        assertThat(result.getItems().get(0).getName()).isEqualTo("Casa Andina");
+        assertThat(result.getItems().get(1).getName()).isEqualTo("Burger King");
+        assertThat(result.getTotalElements()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("Should return empty page when there are no restaurants in list restaurants")
+    void shouldReturnEmptyPageWhenThereAreNoRestaurantsInListRestaurants() {
+        List<Restaurant> emptyList = List.of();
+        var emptyPagedResult = PagedResult.of(emptyList, 0, 10, 0L, 0);
+
+        when(restaurantPersistencePort.findAllPaginatedByNameAsc(0, 10)).thenReturn(emptyPagedResult);
+
+        var result = restaurantUseCase.listRestaurants(0, 10);
+
+        assertThat(result.getItems()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidPaginationException when page is negative in list restaurants")
+    void shouldThrowExceptionWhenPageIsNegativeInListRestaurants() {
+        assertThatThrownBy(() -> restaurantUseCase.listRestaurants(-1, 10))
+                .isInstanceOf(InvalidPaginationException.class);
+
+        verify(restaurantPersistencePort, never()).findAllPaginatedByNameAsc(any(Integer.class), any(Integer.class));
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidPaginationException when size is zero or negative in list restaurants")
+    void shouldThrowExceptionWhenSizeIsZeroOrNegativeInListRestaurants() {
+        assertThatThrownBy(() -> restaurantUseCase.listRestaurants(0, 0))
+                .isInstanceOf(InvalidPaginationException.class);
+
+        assertThatThrownBy(() -> restaurantUseCase.listRestaurants(0, -5))
+                .isInstanceOf(InvalidPaginationException.class);
+
+        verify(restaurantPersistencePort, never()).findAllPaginatedByNameAsc(any(Integer.class), any(Integer.class));
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidPaginationException when size exceeds MAX_PAGE_SIZE in list restaurants")
+    void shouldThrowExceptionWhenSizeExceedsMaxPageSizeInListRestaurants() {
+        assertThatThrownBy(() -> restaurantUseCase.listRestaurants(0, 101))
+                .isInstanceOf(InvalidPaginationException.class);
+
+        verify(restaurantPersistencePort, never()).findAllPaginatedByNameAsc(any(Integer.class), any(Integer.class));
     }
 }

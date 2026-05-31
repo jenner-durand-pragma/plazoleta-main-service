@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.infrastructure.out.jpa.adapter;
 
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEntityMapper;
@@ -30,5 +31,10 @@ public class RestaurantJpaAdapter implements IRestaurantPersistencePort {
     @Override
     public Boolean existsByNit(String nit) {
         return restaurantRepository.existsByNit(nit);
+    }
+
+    @Override
+    public PagedResult<Restaurant> findAllPaginatedByNameAsc(Integer page, Integer size) {
+        return null;
     }
 }

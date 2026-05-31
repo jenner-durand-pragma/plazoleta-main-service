@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.enums.Roles;
 import com.pragma.plazoleta.domain.exception.restaurant.NitAlreadyExistsException;
 import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
@@ -21,6 +22,11 @@ public class RestaurantUseCase implements IRestaurantServicePort {
         validateNitUniqueness(restaurant.getNit());
 
         return restaurantPersistencePort.save(restaurant);
+    }
+
+    @Override
+    public PagedResult<Restaurant> listRestaurants(Integer page, Integer size) {
+        return null;
     }
 
     private void validateOwner(Long ownerId) {
