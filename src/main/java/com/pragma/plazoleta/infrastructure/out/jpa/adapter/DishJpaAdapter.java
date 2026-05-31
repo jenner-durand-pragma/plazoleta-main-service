@@ -35,7 +35,9 @@ public class DishJpaAdapter implements IDishPersistencePort {
 
     @Override
     public List<Dish> findAllByIdIn(List<Long> ids) {
-        return List.of();
+        return dishRepository.findAllById(ids).stream()
+                .map(dishEntityMapper::toModel)
+                .collect(Collectors.toList());
     }
 
     @Override
