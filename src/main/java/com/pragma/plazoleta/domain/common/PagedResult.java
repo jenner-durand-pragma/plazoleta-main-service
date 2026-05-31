@@ -36,7 +36,7 @@ public class PagedResult<T> {
     }
 
     public <R> PagedResult<R> mapTo(Function<? super T, R> mapper) {
-        var itemsMapped = items.stream().map(mapper).collect(Collectors.toUnmodifiableList());
+        var itemsMapped = items.stream().map(mapper).collect(Collectors.toList());
 
         return new PagedResult<>(itemsMapped, page, size, totalElements, totalPages);
     }
