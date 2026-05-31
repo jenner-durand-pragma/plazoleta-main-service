@@ -61,7 +61,16 @@ public class DishUseCase implements IDishServicePort {
 
     @Override
     public PagedResult<Dish> listDishesByRestaurant(Long restaurantId, Long categoryId, Integer page, Integer size) {
-        return null;
+        PagedResult.validatePagination(page, size);
+
+        var restaurant = resolveRestaurant(restaurantId);
+
+        return dishPersistencePort.findActiveByRestaurantAndCategoryPaginated(
+                restaurant.getId(),
+                categoryId,
+                page,
+                size
+        );
     }
 
     private Category resolveCategory(Long categoryId) {
