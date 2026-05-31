@@ -59,6 +59,9 @@ public class DishHandler implements IDishHandler {
             Integer page,
             Integer size
     ) {
-        return null;
+        var paged = dishServicePort.listDishesByRestaurant(restaurantId, categoryId, page, size);
+        var pagedMapped = paged.mapTo(dishResponseMapper::toListItem);
+
+        return PagedResponseDto.from(pagedMapped);
     }
 }
