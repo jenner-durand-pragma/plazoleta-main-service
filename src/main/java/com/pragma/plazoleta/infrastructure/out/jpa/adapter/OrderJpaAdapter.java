@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.infrastructure.out.jpa.adapter;
 
+import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IOrderEntityMapper;
@@ -14,11 +15,17 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
 
     @Override
     public Order save(Order order) {
-        return null;
+        var entity = orderEntityMapper.toEntity(order);
+        var saved = orderRepository.save(entity);
+
+        return orderEntityMapper.toModel(saved);
     }
 
     @Override
     public Boolean existsActiveOrderByClientId(Long clientId) {
-        return null;
+        return orderRepository.existsByClientIdAndStatusIn(
+                clientId,
+                OrderStatus.ACTIVE_STATUSES
+        );
     }
 }
