@@ -26,7 +26,9 @@ public class RestaurantUseCase implements IRestaurantServicePort {
 
     @Override
     public PagedResult<Restaurant> listRestaurants(Integer page, Integer size) {
-        return null;
+        PagedResult.validatePagination(page, size);
+
+        return restaurantPersistencePort.findAllPaginatedByNameAsc(page, size);
     }
 
     private void validateOwner(Long ownerId) {
