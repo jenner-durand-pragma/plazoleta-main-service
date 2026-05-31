@@ -1,11 +1,22 @@
 package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.api.IOrderServicePort;
+import com.pragma.plazoleta.domain.enums.OrderStatus;
+import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException;
+import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
+import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
+import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
+import com.pragma.plazoleta.domain.model.OrderItem;
+import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import lombok.RequiredArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class OrderUseCase implements IOrderServicePort {
@@ -16,6 +27,78 @@ public class OrderUseCase implements IOrderServicePort {
 
     @Override
     public Order createOrder(Order order, Long clientId) {
-        return null;
+        order.checkItemsNotEmpty();
+        order.checkNotDuplicatedItems();
+
+        var restaurantId = order.getRestaurant().getId();
+        var restaurant = resolveRestaurant(restaurantId);
+
+        ensureClientHasNoActiveOrder(clientId);
+
+        var resolvedItems = resolveAndValidateDishes(order.getItems(), restaurantId);
+
+        var newOrder = Order.builder()
+                .clientId(clientId)
+                .restaurant(restaurant)
+                .items(resolvedItems)
+                .status(OrderStatus.PENDING)
+                .orderDate(LocalDateTime.now())
+                .chefId(null)
+                .build();
+
+        return orderPersistencePort.save(newOrder);
+    }
+
+    private Restaurant resolveRestaurant(Long restaurantId) {
+        var restaurant = restaurantPersistencePort.findById(restaurantId);
+        if (restaurant == null) {
+            throw new RestaurantNotFoundException(restaurantId);
+        }
+
+        return restaurant;
+    }
+
+    private void ensureClientHasNoActiveOrder(Long clientId) {
+        if (orderPersistencePort.existsActiveOrderByClientId(clientId)) {
+            throw new ClientHasActiveOrderException();
+        }
+    }
+
+    private List<OrderItem> resolveAndValidateDishes(
+            List<OrderItem> requestedItems,
+            Long restaurantId
+    ) {
+        var requestedIds = requestedItems.stream()
+                .map(item -> item.getDish().getId())
+                .collect(Collectors.toList());
+
+        var foundDishes = dishPersistencePort.findAllByIdIn(requestedIds);
+        if (foundDishes.size() != requestedIds.size()) {
+            throw InvalidOrderDishesException.notFound();
+        }
+
+        var dishesById = foundDishes.stream()
+                .collect(Collectors.toMap(Dish::getId, dish -> dish));
+        for (var dish : foundDishes) {
+            if (Boolean.FALSE.equals(dish.getActive())) {
+                throw InvalidOrderDishesException.notActive();
+            }
+
+            if (!dish.getRestaurant().getId().equals(restaurantId)) {
+                throw InvalidOrderDishesException.notFromRestaurant();
+            }
+        }
+
+        return requestedItems.stream()
+                .map(item -> {
+                    var dish = dishesById.get(item.getDish().getId());
+
+                    return OrderItem.builder()
+                            .dishId(dish.getId())
+                            .dish(dish)
+                            .quantity(item.getQuantity())
+                            .build();
+                })
+                .collect(Collectors.toList());
     }
 }
