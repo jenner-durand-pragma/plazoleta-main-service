@@ -19,6 +19,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
@@ -203,5 +205,50 @@ class DishJpaAdapterTest {
         assertThat(result.getSize()).isEqualTo(10);
         assertThat(result.getTotalElements()).isZero();
         assertThat(result.getTotalPages()).isZero();
+    }
+
+    @Test
+    @DisplayName("Should return matching dishes when IDs are provided in find all by id in")
+    void shouldReturnMatchingDishesWhenIdsAreProvidedInFindAllByIdIn() {
+        var dish1 = dishJpaAdapter.save(buildDish());
+        var savedRestaurant = dish1.getRestaurant();
+        var savedCategory = dish1.getCategory();
+
+        var dish2 = dishJpaAdapter.save(Dish.builder()
+                .name("Burger")
+                .description("Delicious burger")
+                .price(25000)
+                .category(savedCategory)
+                .restaurant(savedRestaurant)
+                .imageUrl("https://dishes.example.com/burger.png")
+                .active(true)
+                .build());
+
+        var dish3 = dishJpaAdapter.save(Dish.builder()
+                .name("Pasta")
+                .description("Italian pasta")
+                .price(30000)
+                .category(savedCategory)
+                .restaurant(savedRestaurant)
+                .imageUrl("https://dishes.example.com/pasta.png")
+                .active(true)
+                .build());
+
+        var result = dishJpaAdapter.findAllByIdIn(List.of(dish1.getId(), dish3.getId()));
+
+        assertThat(result).isNotNull();
+        assertThat(result).hasSize(2);
+        assertThat(result).extracting(Dish::getId).containsExactlyInAnyOrder(dish1.getId(), dish3.getId());
+    }
+
+    @Test
+    @DisplayName("Should return empty list when no IDs match in find all by id in")
+    void shouldReturnEmptyListWhenNoIdsMatchInFindAllByIdIn() {
+        dishJpaAdapter.save(buildDish());
+
+        var result = dishJpaAdapter.findAllByIdIn(List.of(999L, 1000L));
+
+        assertThat(result).isNotNull();
+        assertThat(result).isEmpty();
     }
 }
