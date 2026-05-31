@@ -3,6 +3,8 @@ package com.pragma.plazoleta.application.handler.impl;
 import com.pragma.plazoleta.application.dto.request.dish.CreateDishRequestDto;
 import com.pragma.plazoleta.application.dto.request.dish.UpdateDishRequestDto;
 import com.pragma.plazoleta.application.dto.request.dish.UpdateDishStatusRequestDto;
+import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
+import com.pragma.plazoleta.application.dto.response.dish.DishListItemResponseDto;
 import com.pragma.plazoleta.application.dto.response.dish.DishResponseDto;
 import com.pragma.plazoleta.application.handler.IDishHandler;
 import com.pragma.plazoleta.application.mapper.IDishRequestMapper;
@@ -48,5 +50,15 @@ public class DishHandler implements IDishHandler {
         var updated = dishServicePort.updateDishStatus(dishId, request.getActive(), ownerId);
 
         return dishResponseMapper.toResponse(updated);
+    }
+
+    @Override
+    public PagedResponseDto<DishListItemResponseDto> listDishesByRestaurant(
+            Long restaurantId,
+            Long categoryId,
+            Integer page,
+            Integer size
+    ) {
+        return null;
     }
 }
