@@ -1,8 +1,8 @@
 package com.pragma.plazoleta.domain.model;
 
 import com.pragma.plazoleta.domain.enums.OrderStatus;
-import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderItemException;
-import com.pragma.plazoleta.domain.exception.order.OrderItemsEmptyException;
+import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderDishException;
+import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -28,11 +28,11 @@ public class Order {
     private Long chefId;
 
     private Restaurant restaurant;
-    private List<OrderItem> items;
+    private List<OrderDish> items;
 
     public void checkItemsNotEmpty() {
         if (items == null || items.isEmpty()) {
-            throw new OrderItemsEmptyException();
+            throw new OrderDishesEmptyException();
         }
     }
 
@@ -43,7 +43,7 @@ public class Order {
         var dishIdsNotDuplicated = new HashSet<>(dishIds).size();
 
         if (dishIdsNotDuplicated != dishIds.size()) {
-            throw new DuplicatedOrderItemException();
+            throw new DuplicatedOrderDishException();
         }
     }
 }

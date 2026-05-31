@@ -7,7 +7,7 @@ import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
-import com.pragma.plazoleta.domain.model.OrderItem;
+import com.pragma.plazoleta.domain.model.OrderDish;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
@@ -64,8 +64,8 @@ public class OrderUseCase implements IOrderServicePort {
         }
     }
 
-    private List<OrderItem> resolveAndValidateDishes(
-            List<OrderItem> requestedItems,
+    private List<OrderDish> resolveAndValidateDishes(
+            List<OrderDish> requestedItems,
             Long restaurantId
     ) {
         var requestedIds = requestedItems.stream()
@@ -93,7 +93,7 @@ public class OrderUseCase implements IOrderServicePort {
                 .map(item -> {
                     var dish = dishesById.get(item.getDish().getId());
 
-                    return OrderItem.builder()
+                    return OrderDish.builder()
                             .dishId(dish.getId())
                             .dish(dish)
                             .quantity(item.getQuantity())

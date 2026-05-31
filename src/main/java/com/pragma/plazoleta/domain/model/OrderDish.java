@@ -11,7 +11,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderItem {
+public class OrderDish {
 
     private Long orderId;
     private Long dishId;

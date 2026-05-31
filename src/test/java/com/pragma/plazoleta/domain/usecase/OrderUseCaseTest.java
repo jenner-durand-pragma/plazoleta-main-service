@@ -2,13 +2,13 @@ package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException;
-import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderItemException;
+import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderDishException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
-import com.pragma.plazoleta.domain.exception.order.OrderItemsEmptyException;
+import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
-import com.pragma.plazoleta.domain.model.OrderItem;
+import com.pragma.plazoleta.domain.model.OrderDish;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
@@ -82,12 +82,12 @@ class OrderUseCaseTest {
 
         var restaurantRef = Restaurant.builder().id(RESTAURANT_ID).build();
 
-        var item1Reference = OrderItem.builder()
+        var item1Reference = OrderDish.builder()
                 .dishId(validDish1.getId())
                 .dish(Dish.builder().id(DISH_1_ID).build())
                 .quantity(2)
                 .build();
-        var item2Reference = OrderItem.builder()
+        var item2Reference = OrderDish.builder()
                 .dishId(validDish2.getId())
                 .dish(Dish.builder().id(DISH_2_ID).build())
                 .quantity(1)
@@ -136,33 +136,33 @@ class OrderUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should throw OrderItemsEmptyException when items list is empty in create order")
-    void shouldThrowOrderItemsEmptyExceptionWhenItemsListIsEmptyInCreateOrder() {
+    @DisplayName("Should throw OrderDishesEmptyException when items list is empty in create order")
+    void shouldThrowOrderDishesEmptyExceptionWhenItemsListIsEmptyInCreateOrder() {
         var emptyOrder = Order.builder()
                 .restaurant(Restaurant.builder().id(RESTAURANT_ID).build())
                 .items(List.of())
                 .build();
 
         assertThatThrownBy(() -> orderUseCase.createOrder(emptyOrder, CLIENT_ID))
-                .isInstanceOf(OrderItemsEmptyException.class);
+                .isInstanceOf(OrderDishesEmptyException.class);
 
         verify(restaurantPersistencePort, never()).findById(any());
         verify(orderPersistencePort, never()).save(any());
     }
 
     @Test
-    @DisplayName("Should throw DuplicatedOrderItemException when items contain duplicate dishIds in create order")
-    void shouldThrowDuplicatedOrderItemExceptionWhenItemsContainDuplicateDishIdsInCreateOrder() {
+    @DisplayName("Should throw DuplicatedOrderDishesException when items contain duplicate dishIds in create order")
+    void shouldThrowDuplicatedOrderDishesExceptionWhenItemsContainDuplicateDishIdsInCreateOrder() {
         var duplicatedOrder = Order.builder()
                 .restaurant(Restaurant.builder().id(RESTAURANT_ID).build())
                 .items(List.of(
-                        OrderItem.builder().dish(Dish.builder().id(DISH_1_ID).build()).quantity(2).build(),
-                        OrderItem.builder().dish(Dish.builder().id(DISH_1_ID).build()).quantity(1).build()
+                        OrderDish.builder().dish(Dish.builder().id(DISH_1_ID).build()).quantity(2).build(),
+                        OrderDish.builder().dish(Dish.builder().id(DISH_1_ID).build()).quantity(1).build()
                 ))
                 .build();
 
         assertThatThrownBy(() -> orderUseCase.createOrder(duplicatedOrder, CLIENT_ID))
-                .isInstanceOf(DuplicatedOrderItemException.class);
+                .isInstanceOf(DuplicatedOrderDishException.class);
 
         verify(orderPersistencePort, never()).save(any());
     }
