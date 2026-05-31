@@ -59,8 +59,8 @@ class RestaurantUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should create a restaurant when owner is valid and NIT is unique")
-    void shouldCreateRestaurantSuccessfully() {
+    @DisplayName("Should create a restaurant successfully when owner is valid and NIT is unique in create restaurant")
+    void shouldCreateRestaurantSuccessfullyWhenAllDataIsValidInCreateRestaurant() {
         when(userInformationPort.getUserById(5L))
                 .thenReturn(ownerUser);
         when(restaurantPersistencePort.existsByNit("9001234567"))
@@ -77,8 +77,8 @@ class RestaurantUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should throw UserIsNotOwnerException when user role is not OWNER")
-    void shouldThrowWhenUserIsNotOwner() {
+    @DisplayName("Should throw UserIsNotOwnerException when user role is not OWNER in create restaurant")
+    void shouldThrowExceptionWhenUserRoleIsNotOwnerInCreateRestaurant() {
         var client = UserInformation.builder()
                 .id(5L)
                 .name("Client")
@@ -97,8 +97,8 @@ class RestaurantUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should throw UserIsNotOwnerException when user does not exist")
-    void shouldThrowWhenUserDoesNotExist() {
+    @DisplayName("Should throw UserIsNotOwnerException when user does not exist in create restaurant")
+    void shouldThrowExceptionWhenUserDoesNotExistInCreateRestaurant() {
         when(userInformationPort.getUserById(5L)).thenReturn(null);
 
         assertThatThrownBy(() -> restaurantUseCase.createRestaurant(validRestaurant))
@@ -108,8 +108,8 @@ class RestaurantUseCaseTest {
     }
 
     @Test
-    @DisplayName("Should throw NitAlreadyExistsException when NIT is duplicated")
-    void shouldThrowWhenNitAlreadyExists() {
+    @DisplayName("Should throw NitAlreadyExistsException when NIT is duplicated in create restaurant")
+    void shouldThrowExceptionWhenNitAlreadyExistsInCreateRestaurant() {
         when(userInformationPort.getUserById(5L)).thenReturn(ownerUser);
         when(restaurantPersistencePort.existsByNit("9001234567")).thenReturn(true);
 
