@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.domain.spi;
 
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.model.Restaurant;
 
 public interface IRestaurantPersistencePort {
@@ -9,4 +10,5 @@ public interface IRestaurantPersistencePort {
     Restaurant findById(Long id);
     Boolean existsByNit(String nit);
 
+    PagedResult<Restaurant> findAllPaginatedByNameAsc(Integer page, Integer size);
 }

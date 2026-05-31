@@ -5,6 +5,7 @@ import com.pragma.plazoleta.application.handler.impl.RestaurantHandler;
 import com.pragma.plazoleta.application.mapper.IRestaurantRequestMapper;
 import com.pragma.plazoleta.application.mapper.IRestaurantResponseMapper;
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -16,6 +17,8 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -83,5 +86,43 @@ class RestaurantHandlerTest {
         assertThat(result.getId()).isEqualTo(savedRestaurant.getId());
         assertThat(result.getName()).isEqualTo(savedRestaurant.getName());
         assertThat(result.getNit()).isEqualTo(savedRestaurant.getNit());
+    }
+
+    @Test
+    @DisplayName(
+            "Should return paginated restaurant list successfully " +
+            "when parameters are valid in list restaurants"
+    )
+    void shouldReturnPaginatedRestaurantListSuccessfullyWhenParametersAreValidInListRestaurants() {
+        var restaurant1 = Restaurant.builder()
+                .id(1L)
+                .name("Apple Place")
+                .logoUrl("https://logo.example.com/apple.png")
+                .build();
+        var restaurant2 = Restaurant.builder()
+                .id(2L)
+                .name("Burger Place")
+                .logoUrl("https://logo.example.com/burger.png")
+                .build();
+        var pagedResult = PagedResult.of(
+                List.of(restaurant1, restaurant2), 0, 10, 2L, 1
+        );
+
+        when(restaurantServicePort.listRestaurants(0, 10)).thenReturn(pagedResult);
+
+        var result = restaurantHandler.listRestaurants(0, 10);
+
+        verify(restaurantServicePort).listRestaurants(0, 10);
+        verify(restaurantResponseMapper).toListItem(restaurant1);
+        verify(restaurantResponseMapper).toListItem(restaurant2);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getItems()).hasSize(2);
+        assertThat(result.getItems().get(0).getName()).isEqualTo("Apple Place");
+        assertThat(result.getItems().get(1).getName()).isEqualTo("Burger Place");
+        assertThat(result.getPage()).isZero();
+        assertThat(result.getSize()).isEqualTo(10);
+        assertThat(result.getTotalElements()).isEqualTo(2L);
+        assertThat(result.getTotalPages()).isEqualTo(1);
     }
 }
