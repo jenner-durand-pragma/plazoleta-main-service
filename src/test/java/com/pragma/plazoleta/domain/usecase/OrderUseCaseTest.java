@@ -6,7 +6,10 @@ import com.pragma.plazoleta.domain.exception.common.InvalidPaginationException;
 import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException;
 import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderDishException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
+import com.pragma.plazoleta.domain.exception.order.InvalidOrderStateException;
 import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
+import com.pragma.plazoleta.domain.exception.order.OrderEmployeeOwnershipException;
+import com.pragma.plazoleta.domain.exception.order.OrderNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeWithoutRestaurantException;
 import com.pragma.plazoleta.domain.model.Dish;
@@ -21,11 +24,14 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -59,10 +65,12 @@ class OrderUseCaseTest {
     private Dish validDish1;
     private Dish validDish2;
     private Order validOrder;
+    private Order pendingOrder;
 
     private static final Long CLIENT_ID = 5L;
     private static final Long RESTAURANT_ID = 10L;
     private static final Long EMPLOYEE_ID = 7L;
+    private static final Long ORDER_ID = 42L;
     private static final Long DISH_1_ID = 1L;
     private static final Long DISH_2_ID = 2L;
 
@@ -106,6 +114,16 @@ class OrderUseCaseTest {
         validOrder = Order.builder()
                 .restaurant(restaurantRef)
                 .items(List.of(item1Reference, item2Reference))
+                .build();
+
+        pendingOrder = Order.builder()
+                .id(ORDER_ID)
+                .clientId(CLIENT_ID)
+                .restaurant(restaurantRef)
+                .status(OrderStatus.PENDING)
+                .chefId(null)
+                .orderDate(LocalDateTime.now())
+                .items(List.of())
                 .build();
     }
 
@@ -270,6 +288,101 @@ class OrderUseCaseTest {
 
         assertThatThrownBy(() -> orderUseCase.createOrder(validOrder, CLIENT_ID))
                 .isInstanceOf(InvalidOrderDishesException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should assign chef and transition to IN_PREPARATION when order is in PENDING in assign order")
+    void shouldAssignChefAndTransitionToInPreparationWhenOrderIsInPendingInAssignOrder() {
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.of(pendingOrder));
+        when(orderPersistencePort.save(any(Order.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        var result = orderUseCase.assignOrder(ORDER_ID, EMPLOYEE_ID);
+
+        var captor = ArgumentCaptor.forClass(Order.class);
+        verify(orderPersistencePort).save(captor.capture());
+        var persisted = captor.getValue();
+
+        assertThat(persisted.getStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
+        assertThat(persisted.getChefId()).isEqualTo(EMPLOYEE_ID);
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
+        assertThat(result.getChefId()).isEqualTo(EMPLOYEE_ID);
+    }
+
+    @Test
+    @DisplayName("Should throw OrderNotFoundException when the order does not exist in assign order")
+    void shouldThrowOrderNotFoundExceptionWhenTheOrderDoesNotExistInAssignOrder() {
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderUseCase.assignOrder(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(OrderNotFoundException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName(
+            "Should throw EmployeeWithoutRestaurantException when " +
+            "the employee has no restaurant assigned in assign order"
+    )
+    void shouldThrowEmployeeWithoutRestaurantExceptionWhenTheEmployeeHasNoRestaurantAssignedInAssignOrder() {
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderUseCase.assignOrder(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(EmployeeWithoutRestaurantException.class);
+
+        verify(orderPersistencePort, never()).findById(any());
+        verify(orderPersistencePort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName(
+            "Should throw OrderOwnershipException when " +
+            "the order does not belong to the employee's restaurant in assign order"
+    )
+    void shouldThrowOrderOwnershipExceptionWhenTheOrderDoesNotBelongToTheEmployeesRestaurantInAssignOrder() {
+        var foreignOrder = Order.builder()
+                .id(ORDER_ID)
+                .restaurant(Restaurant.builder().id(99L).build())
+                .status(OrderStatus.PENDING)
+                .build();
+
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.of(foreignOrder));
+
+        assertThatThrownBy(() -> orderUseCase.assignOrder(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(OrderEmployeeOwnershipException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+    }
+
+    @ParameterizedTest(name = "Should throw InvalidOrderStateException when the order is {0} in assign order")
+    @EnumSource(
+            value = OrderStatus.class,
+            mode = EnumSource.Mode.EXCLUDE,
+            names = { "PENDING" }
+    )
+    void shouldThrowInvalidOrderStateExceptionWhenTheOrderIsNotPendingInAssignOrder(OrderStatus invalidStatus) {
+        pendingOrder.setStatus(invalidStatus);
+
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.of(pendingOrder));
+
+        assertThatThrownBy(() -> orderUseCase.assignOrder(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(InvalidOrderStateException.class);
 
         verify(orderPersistencePort, never()).save(any());
     }

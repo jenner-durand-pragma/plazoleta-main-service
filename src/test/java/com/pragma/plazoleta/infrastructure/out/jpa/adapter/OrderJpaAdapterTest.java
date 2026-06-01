@@ -53,13 +53,13 @@ class OrderJpaAdapterTest {
     @Autowired
     private ICategoryRepository categoryRepository;
 
-    private OrderJpaAdapter adapter;
+    private OrderJpaAdapter orderJpaAdapter;
     private RestaurantEntity savedRestaurant;
     private DishEntity savedDish;
 
     @BeforeEach
     void setUp() {
-        adapter = new OrderJpaAdapter(orderRepository, orderEntityMapper, restaurantRepository, dishRepository);
+        orderJpaAdapter = new OrderJpaAdapter(orderRepository, orderEntityMapper, restaurantRepository, dishRepository);
 
         var category = categoryRepository.save(
                 CategoryEntity.builder()
@@ -110,7 +110,7 @@ class OrderJpaAdapterTest {
                 .orderDate(LocalDateTime.now())
                 .build();
 
-        var saved = adapter.save(domainOrder);
+        var saved = orderJpaAdapter.save(domainOrder);
 
         assertThat(saved.getId()).isNotNull();
         assertThat(saved.getStatus()).isEqualTo(OrderStatus.PENDING);
@@ -128,7 +128,7 @@ class OrderJpaAdapterTest {
             var clientId = 100L + activeStatus.ordinal();
             persistOrder(clientId, activeStatus);
 
-            assertThat(adapter.existsActiveOrderByClientId(clientId)).isTrue();
+            assertThat(orderJpaAdapter.existsActiveOrderByClientId(clientId)).isTrue();
         }
     }
 
@@ -137,7 +137,7 @@ class OrderJpaAdapterTest {
     void shouldReturnFalseWhenClientHasNoOrdersInExistsActiveOrderByClientId() {
         var clientId = 200L;
 
-        assertThat(adapter.existsActiveOrderByClientId(clientId)).isFalse();
+        assertThat(orderJpaAdapter.existsActiveOrderByClientId(clientId)).isFalse();
     }
 
     @Test
@@ -147,7 +147,7 @@ class OrderJpaAdapterTest {
         persistOrder(clientId, OrderStatus.DELIVERED);
         persistOrder(clientId, OrderStatus.CANCELLED);
 
-        assertThat(adapter.existsActiveOrderByClientId(clientId)).isFalse();
+        assertThat(orderJpaAdapter.existsActiveOrderByClientId(clientId)).isFalse();
     }
 
     @Test
@@ -160,7 +160,7 @@ class OrderJpaAdapterTest {
         persistOrder(102L, OrderStatus.PENDING, LocalDateTime.now().minusHours(1));
         persistOrder(103L, OrderStatus.READY, LocalDateTime.now());
 
-        var result = adapter.findByRestaurantIdAndStatus(
+        var result = orderJpaAdapter.findByRestaurantIdAndStatus(
                 savedRestaurant.getId(),
                 OrderStatus.PENDING,
                 0,
@@ -177,7 +177,7 @@ class OrderJpaAdapterTest {
     void shouldReturnEmptyPagedResultWhenNoOrdersMatchStatusInFindByRestaurantIdAndStatus() {
         persistOrder(101L, OrderStatus.PENDING);
 
-        var result = adapter.findByRestaurantIdAndStatus(
+        var result = orderJpaAdapter.findByRestaurantIdAndStatus(
                 savedRestaurant.getId(),
                 OrderStatus.DELIVERED,
                 0,
@@ -187,8 +187,17 @@ class OrderJpaAdapterTest {
         assertThat(result.getItems()).isEmpty();
     }
 
+    @Test
+    @DisplayName("Should return order when id exists")
+    void shouldReturnOrderWhenIdExists() {
+        var clientId = 101L;
+        var saved = persistOrder(clientId, OrderStatus.PENDING);
 
-    private void persistOrder(Long clientId, OrderStatus status, LocalDateTime datetime) {
+        assertThat(orderJpaAdapter.findById(saved.getId())).isNotNull();
+        assertThat(orderJpaAdapter.findById(10L)).isEmpty();
+    }
+
+    private Order persistOrder(Long clientId, OrderStatus status, LocalDateTime datetime) {
         var order = Order.builder()
                 .clientId(clientId)
                 .restaurant(Restaurant.builder().id(savedRestaurant.getId()).build())
@@ -205,10 +214,10 @@ class OrderJpaAdapterTest {
                 )
                 .build();
 
-        adapter.save(order);
+        return orderJpaAdapter.save(order);
     }
 
-    private void persistOrder(Long clientId, OrderStatus status) {
-        persistOrder(clientId, status, null);
+    private Order persistOrder(Long clientId, OrderStatus status) {
+        return persistOrder(clientId, status, null);
     }
 }

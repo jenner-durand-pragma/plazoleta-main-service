@@ -31,6 +31,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -136,5 +137,28 @@ class OrderRestControllerTest {
                 .andExpect(status().isOk());
 
         verify(orderHandler).listOrdersByStatus(OrderStatus.READY, 7L, 0, 10);
+    }
+
+    @Test
+    @DisplayName("Should return 200 OK with order in IN_PREPARATION when EMPLOYEE assigns a pending order in assign order")
+    void shouldReturn200OkWithOrderInInPreparationWhenEmployeeAssignsAPendingOrderInAssignOrder() throws Exception {
+        var response = OrderResponseDto.builder()
+                .id(42L)
+                .status(OrderStatus.IN_PREPARATION)
+                .chefId(7L)
+                .restaurantId(10L)
+                .clientId(5L)
+                .build();
+
+        when(orderHandler.assignOrder(42L, 7L)).thenReturn(response);
+
+        mockMvc.perform(patch("/api/v1/orders/42/assign")
+                        .with(authentication(employeeAuthentication)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(42))
+                .andExpect(jsonPath("$.status").value("IN_PREPARATION"))
+                .andExpect(jsonPath("$.chefId").value(7));
+
+        verify(orderHandler).assignOrder(42L, 7L);
     }
 }

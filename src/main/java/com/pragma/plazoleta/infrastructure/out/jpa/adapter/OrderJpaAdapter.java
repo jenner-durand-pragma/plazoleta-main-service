@@ -12,6 +12,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -36,6 +37,12 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
         var saved = orderRepository.save(entity);
 
         return orderEntityMapper.toModel(saved);
+    }
+
+    @Override
+    public Optional<Order> findById(Long orderId) {
+        return orderRepository.findById(orderId)
+                .map(orderEntityMapper::toModel);
     }
 
     @Override

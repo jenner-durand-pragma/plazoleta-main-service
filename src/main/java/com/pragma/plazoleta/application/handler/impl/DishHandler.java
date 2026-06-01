@@ -46,6 +46,7 @@ public class DishHandler implements IDishHandler {
     }
 
     @Override
+    @Transactional
     public DishResponseDto updateDishStatus(Long dishId, UpdateDishStatusRequestDto request, Long ownerId) {
         var updated = dishServicePort.updateDishStatus(dishId, request.getActive(), ownerId);
 

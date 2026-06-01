@@ -13,7 +13,7 @@ import lombok.Setter;
 @Builder
 public class RestaurantEmployee {
 
+    private Long id;
     private Long userId;
     private Long restaurantId;
-
 }

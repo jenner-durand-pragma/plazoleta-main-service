@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.application.dto.response.order;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -32,6 +33,10 @@ public class OrderResponseDto {
 
     @Schema(description = "Current status of the order", example = "PENDING")
     private OrderStatus status;
+
+    @Schema(description = "Id of the chef assigned to the order", example = "7")
+    @JsonInclude(JsonInclude.Include.NON_NULL)
+    private Long chefId;
 
     @Schema(description = "Ordered dishes with quantities")
     private List<OrderDishResponseDto> items;

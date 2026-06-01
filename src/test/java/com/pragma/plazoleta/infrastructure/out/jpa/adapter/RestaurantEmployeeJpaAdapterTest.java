@@ -1,7 +1,6 @@
 package com.pragma.plazoleta.infrastructure.out.jpa.adapter;
 
 import com.pragma.plazoleta.domain.model.RestaurantEmployee;
-import com.pragma.plazoleta.infrastructure.out.jpa.entity.RestaurantEmployeeEntity;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEmployeeEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEmployeeEntityMapperImpl;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantEmployeeRepository;
