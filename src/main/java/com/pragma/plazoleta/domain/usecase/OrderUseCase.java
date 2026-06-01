@@ -6,6 +6,7 @@ import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
+import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeWithoutRestaurantException;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.model.OrderDish;
@@ -59,7 +60,13 @@ public class OrderUseCase implements IOrderServicePort {
             Integer page,
             Integer size
     ) {
-        return null;
+        PagedResult.validatePagination(page, size);
+
+        var restaurantId = restaurantEmployeePersistencePort
+                .findRestaurantIdByUserId(employeeId)
+                .orElseThrow(EmployeeWithoutRestaurantException::new);
+
+        return orderPersistencePort.findByRestaurantIdAndStatus(restaurantId, status, page, size);
     }
 
     private Restaurant resolveRestaurant(Long restaurantId) {
