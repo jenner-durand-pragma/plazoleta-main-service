@@ -1,6 +1,7 @@
 package com.pragma.plazoleta.infrastructure.out.jpa.adapter;
 
 import com.pragma.plazoleta.domain.model.RestaurantEmployee;
+import com.pragma.plazoleta.infrastructure.out.jpa.entity.RestaurantEmployeeEntity;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEmployeeEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEmployeeEntityMapperImpl;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantEmployeeRepository;
@@ -10,6 +11,8 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.context.annotation.Import;
+
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -48,5 +51,14 @@ class RestaurantEmployeeJpaAdapterTest {
         assertThat(saved).isNotNull();
         assertThat(saved.getUserId()).isEqualTo(1L);
         assertThat(saved.getRestaurantId()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("Should return restaurant id when user id exists")
+    void shouldReturnRestaurantIdWhenUserIdExists() {
+        restaurantEmployeeJpaAdapter.save(buildRestaurantEmployee());
+
+        assertThat(restaurantEmployeeJpaAdapter.findRestaurantIdByUserId(1L)).isEqualTo(Optional.of(2L));
+        assertThat(restaurantEmployeeJpaAdapter.findRestaurantIdByUserId(2L)).isEmpty();
     }
 }
