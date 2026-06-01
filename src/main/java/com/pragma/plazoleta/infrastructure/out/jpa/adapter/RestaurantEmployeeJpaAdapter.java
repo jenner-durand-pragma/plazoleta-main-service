@@ -2,6 +2,7 @@ package com.pragma.plazoleta.infrastructure.out.jpa.adapter;
 
 import com.pragma.plazoleta.domain.model.RestaurantEmployee;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
+import com.pragma.plazoleta.infrastructure.out.jpa.entity.RestaurantEmployeeEntity;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEmployeeEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantEmployeeRepository;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class RestaurantEmployeeJpaAdapter implements IRestaurantEmployeePersiste
 
     @Override
     public Optional<Long> findRestaurantIdByUserId(Long userId) {
-        return Optional.empty();
+        return repository.findById(userId)
+                .map(RestaurantEmployeeEntity::getRestaurantId);
     }
 }
