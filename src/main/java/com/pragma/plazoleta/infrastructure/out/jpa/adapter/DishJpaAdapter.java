@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 
+import java.util.List;
 import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
@@ -30,6 +31,13 @@ public class DishJpaAdapter implements IDishPersistencePort {
         return dishRepository.findById(id)
                 .map(dishEntityMapper::toModel)
                 .orElse(null);
+    }
+
+    @Override
+    public List<Dish> findAllByIdIn(List<Long> ids) {
+        return dishRepository.findAllById(ids).stream()
+                .map(dishEntityMapper::toModel)
+                .collect(Collectors.toList());
     }
 
     @Override

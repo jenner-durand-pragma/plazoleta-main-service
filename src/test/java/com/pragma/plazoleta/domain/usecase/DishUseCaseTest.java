@@ -4,8 +4,8 @@ import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.exception.category.CategoryNotFoundException;
 import com.pragma.plazoleta.domain.exception.common.InvalidPaginationException;
 import com.pragma.plazoleta.domain.exception.dish.DishNotFoundException;
-import com.pragma.plazoleta.domain.exception.restaurant.RestaurantOwnershipException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
+import com.pragma.plazoleta.domain.exception.restaurant.RestaurantOwnershipException;
 import com.pragma.plazoleta.domain.model.Category;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Restaurant;
@@ -61,7 +61,7 @@ class DishUseCaseTest {
                 .description("Main dishes")
                 .build();
         restaurant = Restaurant.builder()
-                .id(10L)
+                .id(RESTAURANT_ID)
                 .name("Pizza Place")
                 .ownerId(OWNER_ID)
                 .build();
@@ -87,7 +87,7 @@ class DishUseCaseTest {
         when(dishPersistencePort.save(any(Dish.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
-        var result = dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID);
+        var result = dishUseCase.createDish(validDish, OWNER_ID);
 
         var captor = ArgumentCaptor.forClass(Dish.class);
         verify(dishPersistencePort).save(captor.capture());
@@ -103,7 +103,7 @@ class DishUseCaseTest {
     void shouldThrowWhenCategoryDoesNotExistInCreateDish() {
         when(categoryPersistencePort.findById(1L)).thenReturn(null);
 
-        assertThatThrownBy(() -> dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID))
+        assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
                 .isInstanceOf(CategoryNotFoundException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
@@ -115,7 +115,7 @@ class DishUseCaseTest {
         when(categoryPersistencePort.findById(1L)).thenReturn(mainCourse);
         when(restaurantPersistencePort.findById(10L)).thenReturn(null);
 
-        assertThatThrownBy(() -> dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID))
+        assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
                 .isInstanceOf(RestaurantNotFoundException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));
@@ -131,7 +131,7 @@ class DishUseCaseTest {
         when(categoryPersistencePort.findById(1L)).thenReturn(mainCourse);
         when(restaurantPersistencePort.findById(10L)).thenReturn(otherOwnerRestaurant);
 
-        assertThatThrownBy(() -> dishUseCase.createDish(RESTAURANT_ID, validDish, OWNER_ID))
+        assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
                 .isInstanceOf(RestaurantOwnershipException.class);
 
         verify(dishPersistencePort, never()).save(any(Dish.class));

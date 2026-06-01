@@ -87,20 +87,20 @@ class DishHandlerTest {
     @Test
     @DisplayName("Should create dish successfully when data is valid in create dish")
     void shouldCreateDishSuccessfullyWhenDataIsValidInCreateDish() {
-        when(dishServicePort.createDish(eq(RESTAURANT_ID), any(Dish.class), eq(2L))).thenReturn(savedDish);
+        when(dishServicePort.createDish(any(Dish.class), eq(OWNER_ID))).thenReturn(savedDish);
 
         var result = dishHandler.createDish(RESTAURANT_ID, requestDto, OWNER_ID);
 
         var dishCaptor = ArgumentCaptor.forClass(Dish.class);
-        verify(dishServicePort).createDish(eq(RESTAURANT_ID), dishCaptor.capture(), eq(OWNER_ID));
+        verify(dishServicePort).createDish(dishCaptor.capture(), eq(OWNER_ID));
         var passedDish = dishCaptor.getValue();
 
         assertThat(passedDish.getName()).isEqualTo("Pineapple Pizza");
         assertThat(passedDish.getPrice()).isEqualTo(15000);
         assertThat(passedDish.getCategory().getId()).isEqualTo(1L);
 
-        verify(dishServicePort).createDish(eq(RESTAURANT_ID), any(Dish.class), eq(2L));
-        verify(dishRequestMapper).toDish(requestDto);
+        verify(dishServicePort).createDish(any(Dish.class), eq(2L));
+        verify(dishRequestMapper).toDish(requestDto, RESTAURANT_ID);
         verify(dishResponseMapper).toResponse(savedDish);
 
         assertThat(result).isNotNull();

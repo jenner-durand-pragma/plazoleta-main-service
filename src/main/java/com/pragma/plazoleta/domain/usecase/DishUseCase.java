@@ -21,9 +21,9 @@ public class DishUseCase implements IDishServicePort {
     private final ICategoryPersistencePort categoryPersistencePort;
 
     @Override
-    public Dish createDish(Long restaurantId, Dish dish, Long ownerId) {
+    public Dish createDish(Dish dish, Long ownerId) {
         var category = resolveCategory(dish.getCategory().getId());
-        var restaurant = resolveRestaurant(restaurantId);
+        var restaurant = resolveRestaurant(dish.getRestaurant().getId());
         restaurant.checkOwnership(ownerId);
 
         dish.setCategory(category);
