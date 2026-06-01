@@ -6,6 +6,7 @@ import com.pragma.plazoleta.application.handler.impl.OrderHandler;
 import com.pragma.plazoleta.application.mapper.IOrderRequestMapper;
 import com.pragma.plazoleta.application.mapper.IOrderResponseMapper;
 import com.pragma.plazoleta.domain.api.IOrderServicePort;
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
@@ -115,5 +116,30 @@ class OrderHandlerTest {
         assertThat(result.getStatus()).isEqualTo(OrderStatus.PENDING);
         assertThat(result.getItems()).hasSize(1);
         assertThat(result.getItems().get(0).getDishName()).isEqualTo("Pineapple Pizza");
+    }
+
+    @Test
+    @DisplayName("Should return paginated orders mapped to response dto when data is valid in list orders by status")
+    void shouldReturnPaginatedOrdersMappedToResponseDtoWhenDataIsValidInListOrdersByStatus() {
+        var employeeId = 7L;
+        var pagedResult = PagedResult.of(List.of(savedOrder), 0, 10, 1L, 1);
+
+        when(orderServicePort.listOrdersByStatus(OrderStatus.PENDING, employeeId, 0, 10))
+                .thenReturn(pagedResult);
+
+        var result = orderHandler.listOrdersByStatus(OrderStatus.PENDING, employeeId, 0, 10);
+
+        verify(orderServicePort).listOrdersByStatus(OrderStatus.PENDING, employeeId, 0, 10);
+        verify(orderResponseMapper).toResponse(savedOrder);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getItems()).hasSize(1);
+        assertThat(result.getItems().get(0).getId()).isEqualTo(42L);
+        assertThat(result.getItems().get(0).getStatus()).isEqualTo(OrderStatus.PENDING);
+        assertThat(result.getItems().get(0).getRestaurantId()).isEqualTo(RESTAURANT_ID);
+        assertThat(result.getItems().get(0).getClientId()).isEqualTo(CLIENT_ID);
+        assertThat(result.getPage()).isZero();
+        assertThat(result.getSize()).isEqualTo(10);
+        assertThat(result.getTotalElements()).isEqualTo(1L);
     }
 }
