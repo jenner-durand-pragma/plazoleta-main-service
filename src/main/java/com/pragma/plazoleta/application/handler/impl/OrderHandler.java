@@ -41,6 +41,9 @@ public class OrderHandler implements IOrderHandler {
             Integer page,
             Integer size
     ) {
-        return null;
+        var paged = orderServicePort.listOrdersByStatus(status, employeeId, page, size);
+        var pagedMapped = paged.mapTo(orderResponseMapper::toResponse);
+
+        return PagedResponseDto.from(pagedMapped);
     }
 }
