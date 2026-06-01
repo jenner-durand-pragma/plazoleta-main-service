@@ -133,7 +133,7 @@ public class BeanConfiguration {
 
     @Bean
     public IOrderPersistencePort orderPersistencePort() {
-        return new OrderJpaAdapter(orderRepository, orderEntityMapper);
+        return new OrderJpaAdapter(orderRepository, orderEntityMapper, restaurantRepository, dishRepository);
     }
 
     @Bean

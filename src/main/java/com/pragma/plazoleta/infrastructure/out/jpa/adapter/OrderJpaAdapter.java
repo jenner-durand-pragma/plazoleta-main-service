@@ -5,7 +5,9 @@ import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IOrderEntityMapper;
+import com.pragma.plazoleta.infrastructure.out.jpa.repository.IDishRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IOrderRepository;
+import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
@@ -17,10 +19,20 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
 
     private final IOrderRepository orderRepository;
     private final IOrderEntityMapper orderEntityMapper;
+    private final IRestaurantRepository restaurantRepository;
+    private final IDishRepository dishRepository;
 
     @Override
     public Order save(Order order) {
         var entity = orderEntityMapper.toEntity(order);
+
+        entity.setRestaurant(restaurantRepository.getReferenceById(entity.getRestaurant().getId()));
+        if (entity.getOrderDishes() != null) {
+            entity.getOrderDishes().forEach(od ->
+                    od.setDish(dishRepository.getReferenceById(od.getDish().getId()))
+            );
+        }
+
         var saved = orderRepository.save(entity);
 
         return orderEntityMapper.toModel(saved);

@@ -59,7 +59,7 @@ class OrderJpaAdapterTest {
 
     @BeforeEach
     void setUp() {
-        adapter = new OrderJpaAdapter(orderRepository, orderEntityMapper);
+        adapter = new OrderJpaAdapter(orderRepository, orderEntityMapper, restaurantRepository, dishRepository);
 
         var category = categoryRepository.save(
                 CategoryEntity.builder()
@@ -194,6 +194,7 @@ class OrderJpaAdapterTest {
                 .restaurant(Restaurant.builder().id(savedRestaurant.getId()).build())
                 .items(List.of(OrderDish.builder()
                         .dishId(savedDish.getId())
+                        .dish(Dish.builder().id(savedDish.getId()).build())
                         .quantity(1)
                         .build()))
                 .status(status)
