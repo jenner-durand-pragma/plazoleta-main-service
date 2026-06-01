@@ -54,6 +54,11 @@ public class OrderUseCase implements IOrderServicePort {
     }
 
     @Override
+    public Order assignOrder(Long orderId, Long employeeId) {
+        return null;
+    }
+
+    @Override
     public PagedResult<Order> listOrdersByStatus(
             OrderStatus status,
             Long employeeId,
