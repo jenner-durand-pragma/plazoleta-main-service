@@ -41,7 +41,8 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
 
     @Override
     public Optional<Order> findById(Long orderId) {
-        return Optional.empty();
+        return orderRepository.findById(orderId)
+                .map(orderEntityMapper::toModel);
     }
 
     @Override
