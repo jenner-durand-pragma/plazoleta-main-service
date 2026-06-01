@@ -12,7 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
-@Transactional
+@Transactional(readOnly = true)
 public class EmployeeHandler implements IEmployeeHandler {
 
     private final IEmployeeServicePort employeeServicePort;
@@ -20,6 +20,7 @@ public class EmployeeHandler implements IEmployeeHandler {
     private final IEmployeeResponseMapper responseMapper;
 
     @Override
+    @Transactional
     public EmployeeAssignmentResponseDto createEmployee(
             Long restaurantId,
             CreateEmployeeRequestDto request,
