@@ -3,14 +3,17 @@ package com.pragma.plazoleta.infrastructure.configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.domain.api.IDishServicePort;
 import com.pragma.plazoleta.domain.api.IEmployeeServicePort;
+import com.pragma.plazoleta.domain.api.IOrderServicePort;
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
 import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
+import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import com.pragma.plazoleta.domain.usecase.DishUseCase;
 import com.pragma.plazoleta.domain.usecase.EmployeeUseCase;
+import com.pragma.plazoleta.domain.usecase.OrderUseCase;
 import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.configuration.security.token.ITokenValidationPort;
 import com.pragma.plazoleta.infrastructure.out.feign.adapter.UserInformationAdapter;
@@ -18,14 +21,17 @@ import com.pragma.plazoleta.infrastructure.out.feign.client.IUserFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.mapper.IUserFeignMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.CategoryJpaAdapter;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.DishJpaAdapter;
+import com.pragma.plazoleta.infrastructure.out.jpa.adapter.OrderJpaAdapter;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.RestaurantEmployeeJpaAdapter;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.RestaurantJpaAdapter;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.ICategoryEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IDishEntityMapper;
+import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IOrderEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEmployeeEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.ICategoryRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IDishRepository;
+import com.pragma.plazoleta.infrastructure.out.jpa.repository.IOrderRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantEmployeeRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantRepository;
 import com.pragma.plazoleta.infrastructure.out.security.jwt.JwtAdapter;
@@ -52,6 +58,10 @@ public class BeanConfiguration {
 
     private final IRestaurantEmployeeRepository restaurantEmployeeRepository;
     private final IRestaurantEmployeeEntityMapper restaurantEmployeeEntityMapper;
+
+    private final IOrderRepository orderRepository;
+    private final IOrderEntityMapper orderEntityMapper;
+
 
     private final JwtProperties jwtProperties;
 
@@ -118,6 +128,20 @@ public class BeanConfiguration {
                 restaurantPersistencePort(),
                 restaurantEmployeePersistencePort(),
                 userInformationPort(objectMapper)
+        );
+    }
+
+    @Bean
+    public IOrderPersistencePort orderPersistencePort() {
+        return new OrderJpaAdapter(orderRepository, orderEntityMapper);
+    }
+
+    @Bean
+    public IOrderServicePort orderServicePort() {
+        return new OrderUseCase(
+                orderPersistencePort(),
+                restaurantPersistencePort(),
+                dishPersistencePort()
         );
     }
 }
