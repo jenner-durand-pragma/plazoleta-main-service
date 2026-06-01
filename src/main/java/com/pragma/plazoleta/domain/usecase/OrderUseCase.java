@@ -5,6 +5,7 @@ import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
+import com.pragma.plazoleta.domain.exception.order.OrderNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeWithoutRestaurantException;
 import com.pragma.plazoleta.domain.model.Dish;
@@ -55,7 +56,16 @@ public class OrderUseCase implements IOrderServicePort {
 
     @Override
     public Order assignOrder(Long orderId, Long employeeId) {
-        return null;
+        var employeeRestaurantId = resolveEmployeeRestaurant(employeeId);
+        var order = resolveOrder(orderId);
+
+        order.checkEmployeeRestaurantBelongsToOrderRestaurant(employeeRestaurantId);
+        order.checkStatusIsPending();
+
+        order.setChefId(employeeId);
+        order.setStatus(OrderStatus.IN_PREPARATION);
+
+        return orderPersistencePort.save(order);
     }
 
     @Override
@@ -81,6 +91,17 @@ public class OrderUseCase implements IOrderServicePort {
         }
 
         return restaurant;
+    }
+
+    private Long resolveEmployeeRestaurant(Long employeeId) {
+        return restaurantEmployeePersistencePort
+                .findRestaurantIdByUserId(employeeId)
+                .orElseThrow(EmployeeWithoutRestaurantException::new);
+    }
+
+    private Order resolveOrder(Long orderId) {
+        return orderPersistencePort.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
     }
 
     private void ensureClientHasNoActiveOrder(Long clientId) {

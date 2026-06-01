@@ -2,7 +2,9 @@ package com.pragma.plazoleta.domain.model;
 
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderDishException;
+import com.pragma.plazoleta.domain.exception.order.InvalidOrderStateException;
 import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
+import com.pragma.plazoleta.domain.exception.order.OrderEmployeeOwnershipException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -44,6 +46,18 @@ public class Order {
 
         if (dishIdsNotDuplicated != dishIds.size()) {
             throw new DuplicatedOrderDishException();
+        }
+    }
+
+    public void checkEmployeeRestaurantBelongsToOrderRestaurant(Long restaurantId) {
+        if (!restaurant.getId().equals(restaurantId)) {
+            throw new OrderEmployeeOwnershipException();
+        }
+    }
+
+    public void checkStatusIsPending() {
+        if (status != OrderStatus.PENDING) {
+            throw InvalidOrderStateException.orderNotPending(status.name());
         }
     }
 }
