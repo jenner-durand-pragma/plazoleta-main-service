@@ -141,7 +141,8 @@ public class BeanConfiguration {
         return new OrderUseCase(
                 orderPersistencePort(),
                 restaurantPersistencePort(),
-                dishPersistencePort()
+                dishPersistencePort(),
+                restaurantEmployeePersistencePort()
         );
     }
 }

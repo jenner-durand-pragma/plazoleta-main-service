@@ -6,6 +6,8 @@ import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IRestaurantEmployeeEnt
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantEmployeeRepository;
 import lombok.RequiredArgsConstructor;
 
+import java.util.Optional;
+
 @RequiredArgsConstructor
 public class RestaurantEmployeeJpaAdapter implements IRestaurantEmployeePersistencePort {
 
@@ -18,5 +20,10 @@ public class RestaurantEmployeeJpaAdapter implements IRestaurantEmployeePersiste
         var saved = repository.save(entity);
 
         return mapper.toModel(saved);
+    }
+
+    @Override
+    public Optional<Long> findRestaurantIdByUserId(Long userId) {
+        return Optional.empty();
     }
 }

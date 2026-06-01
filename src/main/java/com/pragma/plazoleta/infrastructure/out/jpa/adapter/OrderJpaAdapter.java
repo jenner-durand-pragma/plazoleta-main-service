@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.infrastructure.out.jpa.adapter;
 
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
@@ -19,6 +20,16 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
         var saved = orderRepository.save(entity);
 
         return orderEntityMapper.toModel(saved);
+    }
+
+    @Override
+    public PagedResult<Order> findByRestaurantIdAndStatus(
+            Long restaurantId,
+            OrderStatus status,
+            Integer page,
+            Integer size
+    ) {
+        return null;
     }
 
     @Override
