@@ -25,6 +25,9 @@ public class OrderHandler implements IOrderHandler {
             CreateOrderRequestDto request,
             Long clientId
     ) {
-        return null;
+        var domainOrder = orderRequestMapper.toOrder(request, restaurantId);
+        var created = orderServicePort.createOrder(domainOrder, clientId);
+
+        return orderResponseMapper.toResponse(created);
     }
 }
