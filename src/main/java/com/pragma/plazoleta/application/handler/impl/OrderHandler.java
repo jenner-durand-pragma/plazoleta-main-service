@@ -37,7 +37,9 @@ public class OrderHandler implements IOrderHandler {
     @Override
     @Transactional
     public OrderResponseDto assignOrder(Long orderId, Long employeeId) {
-        return null;
+        var assigned = orderServicePort.assignOrder(orderId, employeeId);
+
+        return orderResponseMapper.toResponse(assigned);
     }
 
     @Override
