@@ -35,6 +35,12 @@ public class OrderHandler implements IOrderHandler {
     }
 
     @Override
+    @Transactional
+    public OrderResponseDto assignOrder(Long orderId, Long employeeId) {
+        return null;
+    }
+
+    @Override
     public PagedResponseDto<OrderResponseDto> listOrdersByStatus(
             OrderStatus status,
             Long employeeId,

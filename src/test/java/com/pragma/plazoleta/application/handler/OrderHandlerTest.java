@@ -142,4 +142,27 @@ class OrderHandlerTest {
         assertThat(result.getSize()).isEqualTo(10);
         assertThat(result.getTotalElements()).isEqualTo(1L);
     }
+
+    @Test
+    @DisplayName("Should return mapped order response when data is valid in assign order")
+    void shouldReturnMappedOrderResponseWhenDataIsValidInAssignOrder() {
+        var employeeId = 5L;
+        var orderId = savedOrder.getId();
+
+        savedOrder.setStatus(OrderStatus.IN_PREPARATION);
+        savedOrder.setChefId(employeeId);
+
+        when(orderServicePort.assignOrder(orderId, employeeId)).thenReturn(savedOrder);
+
+        var result = orderHandler.assignOrder(orderId, employeeId);
+
+        verify(orderServicePort).assignOrder(orderId, employeeId);
+        verify(orderResponseMapper).toResponse(savedOrder);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(orderId);
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
+        assertThat(result.getRestaurantId()).isEqualTo(RESTAURANT_ID);
+        assertThat(result.getClientId()).isEqualTo(CLIENT_ID);
+    }
 }
