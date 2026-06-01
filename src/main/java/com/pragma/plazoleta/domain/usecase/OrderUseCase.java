@@ -1,16 +1,19 @@
 package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.api.IOrderServicePort;
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
+import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeWithoutRestaurantException;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.model.OrderDish;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
+import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +27,7 @@ public class OrderUseCase implements IOrderServicePort {
     private final IOrderPersistencePort orderPersistencePort;
     private final IRestaurantPersistencePort restaurantPersistencePort;
     private final IDishPersistencePort dishPersistencePort;
+    private final IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort;
 
     @Override
     public Order createOrder(Order order, Long clientId) {
@@ -47,6 +51,22 @@ public class OrderUseCase implements IOrderServicePort {
                 .build();
 
         return orderPersistencePort.save(newOrder);
+    }
+
+    @Override
+    public PagedResult<Order> listOrdersByStatus(
+            OrderStatus status,
+            Long employeeId,
+            Integer page,
+            Integer size
+    ) {
+        PagedResult.validatePagination(page, size);
+
+        var restaurantId = restaurantEmployeePersistencePort
+                .findRestaurantIdByUserId(employeeId)
+                .orElseThrow(EmployeeWithoutRestaurantException::new);
+
+        return orderPersistencePort.findByRestaurantIdAndStatus(restaurantId, status, page, size);
     }
 
     private Restaurant resolveRestaurant(Long restaurantId) {

@@ -1,17 +1,21 @@
 package com.pragma.plazoleta.domain.usecase;
 
+import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
+import com.pragma.plazoleta.domain.exception.common.InvalidPaginationException;
 import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException;
 import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderDishException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
 import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
+import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeWithoutRestaurantException;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.model.OrderDish;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
+import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -23,10 +27,12 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,6 +49,9 @@ class OrderUseCaseTest {
     @Mock
     private IDishPersistencePort dishPersistencePort;
 
+    @Mock
+    private IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort;
+
     @InjectMocks
     private OrderUseCase orderUseCase;
 
@@ -53,6 +62,7 @@ class OrderUseCaseTest {
 
     private static final Long CLIENT_ID = 5L;
     private static final Long RESTAURANT_ID = 10L;
+    private static final Long EMPLOYEE_ID = 7L;
     private static final Long DISH_1_ID = 1L;
     private static final Long DISH_2_ID = 2L;
 
@@ -262,5 +272,78 @@ class OrderUseCaseTest {
                 .isInstanceOf(InvalidOrderDishesException.class);
 
         verify(orderPersistencePort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName(
+            "Should return paginated orders filtered by status when " +
+            "employee is assigned to a restaurant in list orders by status"
+    )
+    void shouldReturnPaginatedOrdersFilteredByStatusWhenEmployeeIsAssignedToARestaurantInListOrdersByStatus() {
+        var order1 = Order.builder().id(1L).status(OrderStatus.PENDING).build();
+        var order2 = Order.builder().id(2L).status(OrderStatus.PENDING).build();
+        var paged = PagedResult.of(List.of(order1, order2), 0, 10, 2L, 1);
+
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findByRestaurantIdAndStatus(RESTAURANT_ID, OrderStatus.PENDING, 0, 10))
+                .thenReturn(paged);
+
+        var result = orderUseCase.listOrdersByStatus(OrderStatus.PENDING, EMPLOYEE_ID, 0, 10);
+
+        assertThat(result.getItems()).hasSize(2);
+        assertThat(result.getItems().get(0).getStatus()).isEqualTo(OrderStatus.PENDING);
+        assertThat(result.getTotalElements()).isEqualTo(2L);
+    }
+
+    @Test
+    @DisplayName("Should return empty page when restaurant has no orders in the given status in list orders by status")
+    void shouldReturnEmptyPageWhenRestaurantHasNoOrdersInTheGivenStatusInListOrdersByStatus() {
+        var emptyPaged = PagedResult.<Order>of(List.of(), 0, 10, 0L, 0);
+
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findByRestaurantIdAndStatus(RESTAURANT_ID, OrderStatus.READY, 0, 10))
+                .thenReturn(emptyPaged);
+
+        var result = orderUseCase.listOrdersByStatus(OrderStatus.READY, EMPLOYEE_ID, 0, 10);
+
+        assertThat(result.getItems()).isEmpty();
+        assertThat(result.getTotalElements()).isZero();
+    }
+
+    @Test
+    @DisplayName(
+            "Should throw EmployeeWithoutRestaurantException when " +
+            "employee has no restaurant assigned in list orders by status"
+    )
+    void shouldThrowEmployeeWithoutRestaurantExceptionWhenEmployeeHasNoRestaurantAssignedInListOrdersByStatus() {
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderUseCase.listOrdersByStatus(OrderStatus.PENDING, EMPLOYEE_ID, 0, 10))
+                .isInstanceOf(EmployeeWithoutRestaurantException.class);
+
+        verify(orderPersistencePort, never()).findByRestaurantIdAndStatus(any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidPaginationException when page is negative in list orders by status")
+    void shouldThrowInvalidPaginationExceptionWhenPageIsNegativeInListOrdersByStatus() {
+        assertThatThrownBy(() -> orderUseCase.listOrdersByStatus(OrderStatus.PENDING, EMPLOYEE_ID, -1, 10))
+                .isInstanceOf(InvalidPaginationException.class);
+
+        verify(restaurantEmployeePersistencePort, never()).findRestaurantIdByUserId(any());
+        verify(orderPersistencePort, never()).findByRestaurantIdAndStatus(any(), any(), anyInt(), anyInt());
+    }
+
+    @Test
+    @DisplayName("Should throw InvalidPaginationException when size exceeds max page size in list orders by status")
+    void shouldThrowInvalidPaginationExceptionWhenSizeExceedsMaxPageSizeInListOrdersByStatus() {
+        assertThatThrownBy(() -> orderUseCase.listOrdersByStatus(OrderStatus.PENDING, EMPLOYEE_ID, 0, 101))
+                .isInstanceOf(InvalidPaginationException.class);
+
+        verify(restaurantEmployeePersistencePort, never()).findRestaurantIdByUserId(any());
+        verify(orderPersistencePort, never()).findByRestaurantIdAndStatus(any(), any(), anyInt(), anyInt());
     }
 }
