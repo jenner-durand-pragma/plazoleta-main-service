@@ -2,7 +2,6 @@ package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantOwnershipException;
-import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
 import com.pragma.plazoleta.domain.exception.restaurantemployee.UserInformationConflictException;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.model.RestaurantEmployee;

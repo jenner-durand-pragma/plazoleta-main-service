@@ -10,7 +10,6 @@ import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsO
 import com.pragma.plazoleta.infrastructure.configuration.security.token.dto.AuthenticatedUser;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.common.ErrorResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;

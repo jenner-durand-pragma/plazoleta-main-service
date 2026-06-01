@@ -59,7 +59,9 @@ public class OrderUseCase implements IOrderServicePort {
     }
 
     private void ensureClientHasNoActiveOrder(Long clientId) {
-        if (orderPersistencePort.existsActiveOrderByClientId(clientId)) {
+        var hasActiveOrder = orderPersistencePort.existsActiveOrderByClientId(clientId);
+
+        if (Boolean.TRUE.equals(hasActiveOrder)) {
             throw new ClientHasActiveOrderException();
         }
     }

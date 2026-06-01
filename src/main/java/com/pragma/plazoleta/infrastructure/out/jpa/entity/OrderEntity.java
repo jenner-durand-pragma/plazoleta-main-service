@@ -1,12 +1,12 @@
 package com.pragma.plazoleta.infrastructure.out.jpa.entity;
 
+import com.pragma.plazoleta.domain.enums.OrderStatus;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
-import javax.persistence.CascadeType;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.EnumType;
@@ -19,9 +19,6 @@ import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToMany;
 import javax.persistence.Table;
-
-import com.pragma.plazoleta.domain.enums.OrderStatus;
-
 import java.time.LocalDateTime;
 import java.util.List;
 
