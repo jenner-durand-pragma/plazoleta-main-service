@@ -126,7 +126,7 @@ class OrderJpaAdapterTest {
     void shouldReturnTrueWhenClientHasActiveOrdersInExistsActiveOrderByClientId() {
         for (var activeStatus : OrderStatus.ACTIVE_STATUSES) {
             var clientId = 100L + activeStatus.ordinal();
-            persistOrderForClient(clientId, activeStatus);
+            persistOrder(clientId, activeStatus);
 
             assertThat(adapter.existsActiveOrderByClientId(clientId)).isTrue();
         }
@@ -144,13 +144,51 @@ class OrderJpaAdapterTest {
     @DisplayName("Should return false when client only has inactive orders in exists active order by client id")
     void shouldReturnFalseWhenClientOnlyHasInactiveOrdersInExistsActiveOrderByClientId() {
         var clientId = 200L;
-        persistOrderForClient(clientId, OrderStatus.DELIVERED);
-        persistOrderForClient(clientId, OrderStatus.CANCELLED);
+        persistOrder(clientId, OrderStatus.DELIVERED);
+        persistOrder(clientId, OrderStatus.CANCELLED);
 
         assertThat(adapter.existsActiveOrderByClientId(clientId)).isFalse();
     }
 
-    private void persistOrderForClient(Long clientId, OrderStatus status) {
+    @Test
+    @DisplayName(
+            "Should return paginated orders sorted by date ascending when " +
+            "orders match status in find by restaurant id and status"
+    )
+    void shouldReturnPaginatedOrdersSortedByDateAscendingWhenOrdersMatchStatusInFindByRestaurantIdAndStatus() {
+        persistOrder(101L, OrderStatus.PENDING, LocalDateTime.now().minusHours(2));
+        persistOrder(102L, OrderStatus.PENDING, LocalDateTime.now().minusHours(1));
+        persistOrder(103L, OrderStatus.READY, LocalDateTime.now());
+
+        var result = adapter.findByRestaurantIdAndStatus(
+                savedRestaurant.getId(),
+                OrderStatus.PENDING,
+                0,
+                10
+        );
+
+        assertThat(result.getItems()).hasSize(2);
+        assertThat(result.getItems().get(0).getClientId()).isEqualTo(101L);
+        assertThat(result.getItems().get(1).getClientId()).isEqualTo(102L);
+    }
+
+    @Test
+    @DisplayName("Should return empty paged result when no orders match status in find by restaurant id and status")
+    void shouldReturnEmptyPagedResultWhenNoOrdersMatchStatusInFindByRestaurantIdAndStatus() {
+        persistOrder(101L, OrderStatus.PENDING);
+
+        var result = adapter.findByRestaurantIdAndStatus(
+                savedRestaurant.getId(),
+                OrderStatus.DELIVERED,
+                0,
+                10
+        );
+
+        assertThat(result.getItems()).isEmpty();
+    }
+
+
+    private void persistOrder(Long clientId, OrderStatus status, LocalDateTime datetime) {
         var order = Order.builder()
                 .clientId(clientId)
                 .restaurant(Restaurant.builder().id(savedRestaurant.getId()).build())
@@ -159,9 +197,17 @@ class OrderJpaAdapterTest {
                         .quantity(1)
                         .build()))
                 .status(status)
-                .orderDate(LocalDateTime.now())
+                .orderDate(
+                        datetime == null
+                                ? LocalDateTime.now()
+                                : datetime
+                )
                 .build();
 
         adapter.save(order);
+    }
+
+    private void persistOrder(Long clientId, OrderStatus status) {
+        persistOrder(clientId, status, null);
     }
 }
