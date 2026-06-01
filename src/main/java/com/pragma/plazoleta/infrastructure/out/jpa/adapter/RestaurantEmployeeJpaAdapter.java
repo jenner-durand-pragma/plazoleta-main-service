@@ -25,7 +25,7 @@ public class RestaurantEmployeeJpaAdapter implements IRestaurantEmployeePersiste
 
     @Override
     public Optional<Long> findRestaurantIdByUserId(Long userId) {
-        return repository.findById(userId)
+        return repository.findByUserId(userId)
                 .map(RestaurantEmployeeEntity::getRestaurantId);
     }
 }
