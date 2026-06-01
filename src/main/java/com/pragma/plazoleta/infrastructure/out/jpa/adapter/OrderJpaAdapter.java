@@ -7,6 +7,10 @@ import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.infrastructure.out.jpa.mapper.IOrderEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IOrderRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+
+import java.util.stream.Collectors;
 
 @RequiredArgsConstructor
 public class OrderJpaAdapter implements IOrderPersistencePort {
@@ -29,7 +33,24 @@ public class OrderJpaAdapter implements IOrderPersistencePort {
             Integer page,
             Integer size
     ) {
-        return null;
+        var pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.ASC, "orderDate"));
+        var orderPage = orderRepository.findByRestaurantIdAndStatus(
+                restaurantId,
+                status,
+                pageable
+        );
+
+        var items = orderPage.getContent().stream()
+                .map(orderEntityMapper::toModel)
+                .collect(Collectors.toList());
+
+        return PagedResult.of(
+                items,
+                orderPage.getNumber(),
+                orderPage.getSize(),
+                orderPage.getTotalElements(),
+                orderPage.getTotalPages()
+        );
     }
 
     @Override
