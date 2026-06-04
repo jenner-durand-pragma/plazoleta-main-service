@@ -9,6 +9,7 @@ public interface IOrderHandler {
 
     OrderResponseDto createOrder(Long restaurantId, CreateOrderRequestDto request, Long clientId);
     OrderResponseDto assignOrder(Long orderId, Long employeeId);
+    OrderResponseDto markOrderReady(Long orderId, Long employeeId);
 
     PagedResponseDto<OrderResponseDto> listOrdersByStatus(
             OrderStatus status,

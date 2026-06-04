@@ -43,6 +43,11 @@ public class OrderHandler implements IOrderHandler {
     }
 
     @Override
+    public OrderResponseDto markOrderReady(Long orderId, Long employeeId) {
+        return null;
+    }
+
+    @Override
     public PagedResponseDto<OrderResponseDto> listOrdersByStatus(
             OrderStatus status,
             Long employeeId,

@@ -144,8 +144,8 @@ class OrderHandlerTest {
     }
 
     @Test
-    @DisplayName("Should return mapped order response when data is valid in assign order")
-    void shouldReturnMappedOrderResponseWhenDataIsValidInAssignOrder() {
+    @DisplayName("Should return updated order response when data is valid in assign order")
+    void shouldUpdatedOrderResponseWhenDataIsValidInAssignOrder() {
         var employeeId = 5L;
         var orderId = savedOrder.getId();
 
@@ -162,6 +162,29 @@ class OrderHandlerTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(orderId);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
+        assertThat(result.getRestaurantId()).isEqualTo(RESTAURANT_ID);
+        assertThat(result.getClientId()).isEqualTo(CLIENT_ID);
+    }
+
+    @Test
+    @DisplayName("Should return updated order response when data is valid in mark order ready")
+    void shouldUpdatedOrderResponseWhenDataIsValidInMarkOrderReady() {
+        var employeeId = 5L;
+        var orderId = savedOrder.getId();
+
+        savedOrder.setStatus(OrderStatus.READY);
+        savedOrder.setChefId(employeeId);
+
+        when(orderServicePort.assignOrder(orderId, employeeId)).thenReturn(savedOrder);
+
+        var result = orderHandler.assignOrder(orderId, employeeId);
+
+        verify(orderServicePort).assignOrder(orderId, employeeId);
+        verify(orderResponseMapper).toResponse(savedOrder);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(orderId);
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.READY);
         assertThat(result.getRestaurantId()).isEqualTo(RESTAURANT_ID);
         assertThat(result.getClientId()).isEqualTo(CLIENT_ID);
     }
