@@ -44,7 +44,9 @@ public class OrderHandler implements IOrderHandler {
 
     @Override
     public OrderResponseDto markOrderReady(Long orderId, Long employeeId) {
-        return null;
+        var orderReady = orderServicePort.markOrderReady(orderId, employeeId);
+
+        return orderResponseMapper.toResponse(orderReady);
     }
 
     @Override
