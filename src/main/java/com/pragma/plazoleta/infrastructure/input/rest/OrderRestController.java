@@ -99,4 +99,13 @@ public class OrderRestController {
     ) {
         return ResponseEntity.ok(orderHandler.assignOrder(orderId, authenticatedUser.getUserId()));
     }
+
+    @IsEmployee
+    @PatchMapping("/{orderId}/ready")
+    public ResponseEntity<OrderResponseDto> markOrderReady(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return null;
+    }
 }
