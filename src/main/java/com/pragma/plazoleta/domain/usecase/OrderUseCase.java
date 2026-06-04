@@ -13,9 +13,11 @@ import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.model.OrderDish;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
+import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
+import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import lombok.RequiredArgsConstructor;
 
 import java.time.LocalDateTime;
@@ -29,6 +31,8 @@ public class OrderUseCase implements IOrderServicePort {
     private final IRestaurantPersistencePort restaurantPersistencePort;
     private final IDishPersistencePort dishPersistencePort;
     private final IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort;
+    private final INotificationPort notificationPort;
+    private final IUserInformationPort userInformationPort;
 
     @Override
     public Order createOrder(Order order, Long clientId) {
@@ -66,6 +70,11 @@ public class OrderUseCase implements IOrderServicePort {
         order.setStatus(OrderStatus.IN_PREPARATION);
 
         return orderPersistencePort.save(order);
+    }
+
+    @Override
+    public Order markOrderReady(Long orderId, Long employeeId) {
+        return null;
     }
 
     @Override
