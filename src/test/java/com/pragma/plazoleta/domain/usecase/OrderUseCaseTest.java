@@ -7,6 +7,7 @@ import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException
 import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderDishException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderStateException;
+import com.pragma.plazoleta.domain.exception.order.OrderChefOwnershipException;
 import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
 import com.pragma.plazoleta.domain.exception.order.OrderEmployeeOwnershipException;
 import com.pragma.plazoleta.domain.exception.order.OrderNotFoundException;
@@ -42,7 +43,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -498,6 +498,26 @@ class OrderUseCaseTest {
                 .isInstanceOf(OrderEmployeeOwnershipException.class);
 
         verify(orderPersistencePort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName(
+            "Should throw OrderChefOwnershipException when " +
+            "the employee is not the assigned chef in mark order ready"
+    )
+    void shouldThrowOrderChefOwnershipExceptionWhenTheEmployeeIsNotTheAssignedChefInMarkOrderReady() {
+        inPreparationOrder.setChefId(99L);
+
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.of(inPreparationOrder));
+
+        assertThatThrownBy(() -> orderUseCase.markOrderReady(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(OrderChefOwnershipException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+        verify(notificationPort, never()).notifyOrderReady(any(), any());
     }
 
     @ParameterizedTest(name = "Should throw InvalidOrderStateException when the order is {0} in markOrderReady")

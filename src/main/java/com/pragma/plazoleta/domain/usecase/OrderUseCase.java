@@ -78,6 +78,7 @@ public class OrderUseCase implements IOrderServicePort {
         var order = resolveOrder(orderId);
 
         order.checkEmployeeRestaurantBelongsToOrderRestaurant(employeeRestaurantId);
+        order.checkEmployeeIsAssignedChef(employeeId);
         order.checkStatusIsInPreparation();
 
         order.generateSixDigitPin();
