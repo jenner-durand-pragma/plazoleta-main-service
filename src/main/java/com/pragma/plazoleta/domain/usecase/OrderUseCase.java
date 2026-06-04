@@ -74,7 +74,20 @@ public class OrderUseCase implements IOrderServicePort {
 
     @Override
     public Order markOrderReady(Long orderId, Long employeeId) {
-        return null;
+        var employeeRestaurantId = resolveEmployeeRestaurant(employeeId);
+        var order = resolveOrder(orderId);
+
+        order.checkEmployeeRestaurantBelongsToOrderRestaurant(employeeRestaurantId);
+        order.checkStatusIsInPreparation();
+
+        order.generateSixDigitPin();
+        order.setStatus(OrderStatus.READY);
+        var savedOrder = orderPersistencePort.save(order);
+
+        var customer = userInformationPort.getUserById(savedOrder.getClientId());
+        notificationPort.notifyOrderReady(savedOrder, customer.getPhone());
+
+        return orderPersistencePort.save(order);
     }
 
     @Override

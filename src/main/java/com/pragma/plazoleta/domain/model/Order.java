@@ -11,6 +11,7 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
@@ -28,9 +29,12 @@ public class Order {
     private LocalDateTime orderDate;
     private OrderStatus status;
     private Long chefId;
+    private String securityPin;
 
     private Restaurant restaurant;
     private List<OrderDish> items;
+
+    private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
     public void checkItemsNotEmpty() {
         if (items == null || items.isEmpty()) {
@@ -59,5 +63,17 @@ public class Order {
         if (status != OrderStatus.PENDING) {
             throw InvalidOrderStateException.orderNotPending(status.name());
         }
+    }
+
+    public void checkStatusIsInPreparation() {
+        if (status != OrderStatus.IN_PREPARATION) {
+            throw InvalidOrderStateException.orderNotInPreparation(status.name());
+        }
+    }
+
+    public void generateSixDigitPin() {
+        var pin = SECURE_RANDOM.nextInt(900000) + 100000;
+
+        securityPin = String.valueOf(pin);
     }
 }
