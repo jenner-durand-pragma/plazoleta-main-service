@@ -7,6 +7,7 @@ import com.pragma.plazoleta.domain.api.IOrderServicePort;
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
 import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
+import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
@@ -16,7 +17,9 @@ import com.pragma.plazoleta.domain.usecase.EmployeeUseCase;
 import com.pragma.plazoleta.domain.usecase.OrderUseCase;
 import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.configuration.security.token.ITokenValidationPort;
+import com.pragma.plazoleta.infrastructure.out.feign.adapter.NotificationAdapter;
 import com.pragma.plazoleta.infrastructure.out.feign.adapter.UserInformationAdapter;
+import com.pragma.plazoleta.infrastructure.out.feign.client.INotificationFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IUserFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.mapper.IUserFeignMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.CategoryJpaAdapter;
@@ -62,6 +65,7 @@ public class BeanConfiguration {
     private final IOrderRepository orderRepository;
     private final IOrderEntityMapper orderEntityMapper;
 
+    private final INotificationFeignClient notificationFeignClient;
 
     private final JwtProperties jwtProperties;
 
@@ -137,12 +141,21 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public IOrderServicePort orderServicePort() {
+    public INotificationPort notificationPort() {
+        return new NotificationAdapter(notificationFeignClient);
+    }
+
+    @Bean
+    public IOrderServicePort orderServicePort(
+            ObjectMapper objectMapper
+    ) {
         return new OrderUseCase(
                 orderPersistencePort(),
                 restaurantPersistencePort(),
                 dishPersistencePort(),
-                restaurantEmployeePersistencePort()
+                restaurantEmployeePersistencePort(),
+                notificationPort(),
+                userInformationPort(objectMapper)
         );
     }
 }
