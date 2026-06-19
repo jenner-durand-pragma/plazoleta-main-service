@@ -43,6 +43,7 @@ public class OrderHandler implements IOrderHandler {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto markOrderReady(Long orderId, Long employeeId) {
         var orderReady = orderServicePort.markOrderReady(orderId, employeeId);
 

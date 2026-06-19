@@ -88,7 +88,7 @@ public class OrderUseCase implements IOrderServicePort {
         var customer = userInformationPort.getUserById(savedOrder.getClientId());
         notificationPort.notifyOrderReady(savedOrder, customer.getPhone());
 
-        return orderPersistencePort.save(order);
+        return savedOrder;
     }
 
     @Override
