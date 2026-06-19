@@ -140,7 +140,10 @@ class OrderRestControllerTest {
     }
 
     @Test
-    @DisplayName("Should return 200 OK with order in IN_PREPARATION when EMPLOYEE assigns a pending order in assign order")
+    @DisplayName(
+            "Should return 200 OK with order in IN_PREPARATION when " +
+            "EMPLOYEE assigns a pending order in assign order"
+    )
     void shouldReturn200OkWithOrderInInPreparationWhenEmployeeAssignsAPendingOrderInAssignOrder() throws Exception {
         var response = OrderResponseDto.builder()
                 .id(42L)
@@ -160,5 +163,27 @@ class OrderRestControllerTest {
                 .andExpect(jsonPath("$.chefId").value(7));
 
         verify(orderHandler).assignOrder(42L, 7L);
+    }
+
+    @Test
+    @DisplayName(
+            "Should return 200 with READY when " +
+            "EMPLOYEE marks an in-preparation order ready in mark order ready"
+    )
+    void shouldReturn200WithReadyAndPinWhenEmployeeMarksAnInPreparationOrderReadyInMarkOrderReady() throws Exception {
+        var response = OrderResponseDto.builder()
+                .id(42L)
+                .status(OrderStatus.READY)
+                .chefId(7L)
+                .restaurantId(10L)
+                .clientId(5L)
+                .build();
+
+        when(orderHandler.markOrderReady(42L, 7L)).thenReturn(response);
+
+        mockMvc.perform(patch("/api/v1/orders/42/ready")
+                        .with(authentication(employeeAuthentication)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("READY"));
     }
 }

@@ -99,4 +99,35 @@ public class OrderRestController {
     ) {
         return ResponseEntity.ok(orderHandler.assignOrder(orderId, authenticatedUser.getUserId()));
     }
+
+    @IsEmployee
+    @Operation(summary = "Mark order as READY and notify the customer with the security PIN",
+            description = "Transitions the order from IN_PREPARATION to READY.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Order marked as READY and notification dispatched",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = OrderResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Caller is not an EMPLOYEE",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Employee has no restaurant assigned," +
+                    "order does not belong to employee's restaurant," +
+                    "employee is not an assigned chef," +
+                    "or order is not in valid status",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PatchMapping("/{orderId}/ready")
+    public ResponseEntity<OrderResponseDto> markOrderReady(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return ResponseEntity.ok(orderHandler.markOrderReady(orderId, authenticatedUser.getUserId()));
+    }
 }

@@ -26,7 +26,7 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
-class UserValidationAdapterTest {
+class UserInformationAdapterTest {
 
     @Mock
     private IUserFeignClient userFeignClient;
@@ -39,22 +39,6 @@ class UserValidationAdapterTest {
 
     @InjectMocks
     private UserInformationAdapter userInformationAdapter;
-
-    private FeignException.@NotNull BadRequest getBadRequest(Request request) {
-        var jsonBody = "{\n" +
-                "    \"message\": \"Validation failed\",\n" +
-                "    \"fieldErrors\": [\n" +
-                "        { \"field\": \"documentNumber\", \"message\": \"Document number must be numeric only\" }\n" +
-                "    ]\n" +
-                "}";
-
-        return new FeignException.BadRequest(
-                "Bad Request",
-                request,
-                jsonBody.getBytes(StandardCharsets.UTF_8),
-                Collections.emptyMap()
-        );
-    }
 
     @Test
     @DisplayName("Should return mapped UserInfo when users-service responds")
@@ -156,5 +140,21 @@ class UserValidationAdapterTest {
         assertThatThrownBy(() -> userInformationAdapter.createEmployee(employee))
                 .isInstanceOf(UserInformationConflictException.class)
                 .hasMessage("Document number must be numeric only");
+    }
+
+    private FeignException.@NotNull BadRequest getBadRequest(Request request) {
+        var jsonBody = "{\n" +
+                "    \"message\": \"Validation failed\",\n" +
+                "    \"fieldErrors\": [\n" +
+                "        { \"field\": \"documentNumber\", \"message\": \"Document number must be numeric only\" }\n" +
+                "    ]\n" +
+                "}";
+
+        return new FeignException.BadRequest(
+                "Bad Request",
+                request,
+                jsonBody.getBytes(StandardCharsets.UTF_8),
+                Collections.emptyMap()
+        );
     }
 }

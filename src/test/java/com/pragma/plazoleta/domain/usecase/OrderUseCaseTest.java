@@ -7,6 +7,7 @@ import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException
 import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderDishException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderStateException;
+import com.pragma.plazoleta.domain.exception.order.OrderChefOwnershipException;
 import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
 import com.pragma.plazoleta.domain.exception.order.OrderEmployeeOwnershipException;
 import com.pragma.plazoleta.domain.exception.order.OrderNotFoundException;
@@ -16,10 +17,13 @@ import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.model.OrderDish;
 import com.pragma.plazoleta.domain.model.Restaurant;
+import com.pragma.plazoleta.domain.model.UserInformation;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
+import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
+import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -58,6 +62,12 @@ class OrderUseCaseTest {
     @Mock
     private IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort;
 
+    @Mock
+    private INotificationPort notificationPort;
+
+    @Mock
+    private IUserInformationPort userInformationPort;
+
     @InjectMocks
     private OrderUseCase orderUseCase;
 
@@ -66,6 +76,8 @@ class OrderUseCaseTest {
     private Dish validDish2;
     private Order validOrder;
     private Order pendingOrder;
+    private Order inPreparationOrder;
+    private UserInformation customer;
 
     private static final Long CLIENT_ID = 5L;
     private static final Long RESTAURANT_ID = 10L;
@@ -124,6 +136,25 @@ class OrderUseCaseTest {
                 .chefId(null)
                 .orderDate(LocalDateTime.now())
                 .items(List.of())
+                .build();
+
+        inPreparationOrder = Order.builder()
+                .id(ORDER_ID)
+                .clientId(CLIENT_ID)
+                .restaurant(restaurantRef)
+                .status(OrderStatus.IN_PREPARATION)
+                .chefId(EMPLOYEE_ID)
+                .orderDate(LocalDateTime.now())
+                .items(List.of())
+                .build();
+
+        customer = UserInformation.builder()
+                .id(CLIENT_ID)
+                .name("Jenner")
+                .lastName("Durand")
+                .documentNumber("72839422")
+                .phone("+5198576854")
+                .email("jenner.durand@plazoleta.com")
                 .build();
     }
 
@@ -382,6 +413,126 @@ class OrderUseCaseTest {
                 .thenReturn(Optional.of(pendingOrder));
 
         assertThatThrownBy(() -> orderUseCase.assignOrder(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(InvalidOrderStateException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName(
+            "Should generate a 6-digit PIN, set status to READY and notify customer " +
+            "when order is IN_PREPARATION in mark order ready"
+    )
+    void shouldGenerateASixDigitPinSetStatusToReadyAndNotifyCustomerWhenOrderIsInPreparationInMarkOrderReady() {
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.of(inPreparationOrder));
+        when(userInformationPort.getUserById(CLIENT_ID))
+                .thenReturn(customer);
+        when(orderPersistencePort.save(any(Order.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        var result = orderUseCase.markOrderReady(ORDER_ID, EMPLOYEE_ID);
+
+        var captor = ArgumentCaptor.forClass(Order.class);
+        verify(orderPersistencePort, org.mockito.Mockito.atLeastOnce()).save(captor.capture());
+        var persisted = captor.getValue();
+
+        assertThat(persisted.getStatus()).isEqualTo(OrderStatus.READY);
+        assertThat(persisted.getSecurityPin()).isNotNull();
+        assertThat(persisted.getSecurityPin()).matches("\\d{6}");
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.READY);
+
+        verify(notificationPort).notifyOrderReady(persisted, "+5198576854");
+    }
+
+    @Test
+    @DisplayName("Should throw OrderNotFoundException when the order does not exist in mark order ready")
+    void shouldThrowOrderNotFoundExceptionWhenTheOrderDoesNotExistInMarkOrderReady() {
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderUseCase.markOrderReady(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(OrderNotFoundException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+        verify(notificationPort, never()).notifyOrderReady(any(), any());
+    }
+
+    @Test
+    @DisplayName(
+            "Should throw EmployeeWithoutRestaurantException when " +
+            "the employee has no restaurant assigned in mark order ready"
+    )
+    void shouldThrowEmployeeWithoutRestaurantExceptionWhenTheEmployeeHasNoRestaurantAssignedInMarkOrderReady() {
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderUseCase.markOrderReady(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(EmployeeWithoutRestaurantException.class);
+
+        verify(orderPersistencePort, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName(
+            "Should throw OrderEmployeeOwnershipException when " +
+            "the order belongs to a different restaurant in mark order ready"
+    )
+    void shouldThrowOrderEmployeeOwnershipExceptionWhenTheOrderBelongsToADifferentRestaurantInMarkOrderReady() {
+        var foreignOrder = Order.builder()
+                .id(ORDER_ID)
+                .restaurant(Restaurant.builder().id(99L).build())
+                .status(OrderStatus.IN_PREPARATION)
+                .build();
+
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.of(foreignOrder));
+
+        assertThatThrownBy(() -> orderUseCase.markOrderReady(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(OrderEmployeeOwnershipException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName(
+            "Should throw OrderChefOwnershipException when " +
+            "the employee is not the assigned chef in mark order ready"
+    )
+    void shouldThrowOrderChefOwnershipExceptionWhenTheEmployeeIsNotTheAssignedChefInMarkOrderReady() {
+        inPreparationOrder.setChefId(99L);
+
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.of(inPreparationOrder));
+
+        assertThatThrownBy(() -> orderUseCase.markOrderReady(ORDER_ID, EMPLOYEE_ID))
+                .isInstanceOf(OrderChefOwnershipException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+        verify(notificationPort, never()).notifyOrderReady(any(), any());
+    }
+
+    @ParameterizedTest(name = "Should throw InvalidOrderStateException when the order is {0} in markOrderReady")
+    @EnumSource(value = OrderStatus.class, mode = EnumSource.Mode.EXCLUDE, names = { "IN_PREPARATION" })
+    void shouldThrowInvalidOrderStateExceptionWhenTheOrderIsNotInPreparationInMarkOrderReady(
+            OrderStatus invalidStatus
+    ) {
+        inPreparationOrder.setStatus(invalidStatus);
+
+        when(restaurantEmployeePersistencePort.findRestaurantIdByUserId(EMPLOYEE_ID))
+                .thenReturn(Optional.of(RESTAURANT_ID));
+        when(orderPersistencePort.findById(ORDER_ID))
+                .thenReturn(Optional.of(inPreparationOrder));
+
+        assertThatThrownBy(() -> orderUseCase.markOrderReady(ORDER_ID, EMPLOYEE_ID))
                 .isInstanceOf(InvalidOrderStateException.class);
 
         verify(orderPersistencePort, never()).save(any());

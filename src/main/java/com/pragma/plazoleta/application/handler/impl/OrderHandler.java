@@ -43,6 +43,14 @@ public class OrderHandler implements IOrderHandler {
     }
 
     @Override
+    @Transactional
+    public OrderResponseDto markOrderReady(Long orderId, Long employeeId) {
+        var orderReady = orderServicePort.markOrderReady(orderId, employeeId);
+
+        return orderResponseMapper.toResponse(orderReady);
+    }
+
+    @Override
     public PagedResponseDto<OrderResponseDto> listOrdersByStatus(
             OrderStatus status,
             Long employeeId,
