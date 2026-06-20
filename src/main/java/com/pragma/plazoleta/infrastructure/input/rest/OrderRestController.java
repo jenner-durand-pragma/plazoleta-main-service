@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.infrastructure.input.rest;
 
+import com.pragma.plazoleta.application.dto.request.order.DeliverOrderRequestDto;
 import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
 import com.pragma.plazoleta.application.dto.response.order.OrderResponseDto;
 import com.pragma.plazoleta.application.handler.IOrderHandler;
@@ -20,9 +21,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -129,5 +133,15 @@ public class OrderRestController {
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
         return ResponseEntity.ok(orderHandler.markOrderReady(orderId, authenticatedUser.getUserId()));
+    }
+
+    @IsEmployee
+    @PatchMapping("/{orderId}/deliver")
+    public ResponseEntity<OrderResponseDto> deliverOrder(
+            @PathVariable Long orderId,
+            @Valid @RequestBody DeliverOrderRequestDto request,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return null;
     }
 }
