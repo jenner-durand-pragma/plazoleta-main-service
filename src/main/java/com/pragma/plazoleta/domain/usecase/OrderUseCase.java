@@ -108,7 +108,14 @@ public class OrderUseCase implements IOrderServicePort {
 
     @Override
     public Order cancelOrder(Long orderId, Long clientId) {
-        return null;
+        var order = resolveOrder(orderId);
+
+        order.checkBelongsToClient(clientId);
+        ensureOrderIsPendingToCancel(order);
+
+        order.setStatus(OrderStatus.CANCELLED);
+
+        return orderPersistencePort.save(order);
     }
 
     @Override
@@ -125,6 +132,15 @@ public class OrderUseCase implements IOrderServicePort {
                 .orElseThrow(EmployeeWithoutRestaurantException::new);
 
         return orderPersistencePort.findByRestaurantIdAndStatus(restaurantId, status, page, size);
+    }
+
+    private void ensureOrderIsPendingToCancel(Order order) {
+        if (Boolean.FALSE.equals(order.isStatus(OrderStatus.PENDING))) {
+            var client = userInformationPort.getUserById(order.getClientId());
+            notificationPort.notifyOrderCannotCancelled(order, client.getPhone());
+
+            throw new OrderCannotBeCancelledException();
+        }
     }
 
     private Restaurant resolveRestaurant(Long restaurantId) {
