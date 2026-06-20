@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.infrastructure.out.feign.adapter;
 
+import com.pragma.plazoleta.domain.exception.order.OrderCannotBeCancelledException;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.infrastructure.out.feign.client.INotificationFeignClient;
@@ -17,7 +18,7 @@ public class NotificationAdapter implements INotificationPort {
     private static final String MESSAGE_ORDER_READY_TEMPLATE = "Your order #%d is ready. PIN: %s";
 
     @Override
-    public void notifyOrderReady(Order order, String customerPhone) {
+    public void notifyOrderReady(Order order, String clientPhone) {
         try {
             var message = String.format(
                     MESSAGE_ORDER_READY_TEMPLATE,
@@ -27,7 +28,7 @@ public class NotificationAdapter implements INotificationPort {
 
             var sendSmsRequest = SendSmsRequestDto.builder()
                     .message(message)
-                    .to(customerPhone)
+                    .to(clientPhone)
                     .build();
 
             notificationFeignClient.sendSms(sendSmsRequest);
@@ -40,5 +41,10 @@ public class NotificationAdapter implements INotificationPort {
 
             throw ex;
         }
+    }
+
+    @Override
+    public void notifyOrderCannotCancelled(Order order, String clientPhone) {
+        return;
     }
 }

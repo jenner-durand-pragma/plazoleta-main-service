@@ -5,6 +5,7 @@ import com.pragma.plazoleta.domain.common.PagedResult;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.exception.order.ClientHasActiveOrderException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
+import com.pragma.plazoleta.domain.exception.order.OrderCannotBeCancelledException;
 import com.pragma.plazoleta.domain.exception.order.OrderNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeWithoutRestaurantException;
@@ -103,6 +104,11 @@ public class OrderUseCase implements IOrderServicePort {
         order.setStatus(OrderStatus.DELIVERED);
 
         return orderPersistencePort.save(order);
+    }
+
+    @Override
+    public Order cancelOrder(Long orderId, Long clientId) {
+        return null;
     }
 
     @Override

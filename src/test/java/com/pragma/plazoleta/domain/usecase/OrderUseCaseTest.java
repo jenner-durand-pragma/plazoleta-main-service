@@ -8,9 +8,11 @@ import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderDishException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderDishesException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderStateException;
 import com.pragma.plazoleta.domain.exception.order.InvalidSecurityPinException;
+import com.pragma.plazoleta.domain.exception.order.OrderCannotBeCancelledException;
 import com.pragma.plazoleta.domain.exception.order.OrderChefOwnershipException;
 import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
 import com.pragma.plazoleta.domain.exception.order.OrderEmployeeOwnershipException;
+import com.pragma.plazoleta.domain.exception.order.OrderNotBelongsToClientException;
 import com.pragma.plazoleta.domain.exception.order.OrderNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundException;
 import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeWithoutRestaurantException;
@@ -31,6 +33,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -42,6 +45,7 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.in;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
@@ -653,6 +657,65 @@ class OrderUseCaseTest {
 
         assertThatThrownBy(() -> orderUseCase.markOrderDelivered(ORDER_ID, EMPLOYEE_ID, CORRECT_PIN))
                 .isInstanceOf(InvalidOrderStateException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName("Should transition order to CANCELLED when client owns the order and it is PENDING in cancel order")
+    void shouldTransitionOrderToCancelledWhenClientOwnsTheOrderAndItIsPendingInCancelOrder() {
+        when(orderPersistencePort.findById(ORDER_ID)).thenReturn(Optional.of(pendingOrder));
+        when(orderPersistencePort.save(any(Order.class)))
+                .thenAnswer(inv -> inv.getArgument(0));
+
+        var result = orderUseCase.cancelOrder(ORDER_ID, CLIENT_ID);
+
+        var captor = ArgumentCaptor.forClass(Order.class);
+        verify(orderPersistencePort).save(captor.capture());
+        assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+    }
+
+    @Test
+    @DisplayName("Should throw OrderNotFoundException when the order does not exist in cancel order")
+    void shouldThrowOrderNotFoundExceptionWhenTheOrderDoesNotExistInCancelOrder() {
+        when(orderPersistencePort.findById(ORDER_ID)).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> orderUseCase.cancelOrder(ORDER_ID, CLIENT_ID))
+                .isInstanceOf(OrderNotFoundException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+    }
+
+    @Test
+    @DisplayName(
+            "Should throw OrderNotBelongsToClientException when " +
+            "the order does not belong to the caller client in cancel order"
+    )
+    void shouldThrowOrderNotBelongsToClientExceptionWhenTheOrderDoesNotBelongToTheCallerClientInCancelOrder() {
+        var otherClientId = 10L;
+        when(orderPersistencePort.findById(ORDER_ID)).thenReturn(Optional.of(pendingOrder));
+
+        assertThatThrownBy(() -> orderUseCase.cancelOrder(ORDER_ID, otherClientId))
+                .isInstanceOf(OrderNotBelongsToClientException.class);
+
+        verify(orderPersistencePort, never()).save(any());
+    }
+
+    @ParameterizedTest(
+            name = "Should throw OrderCannotBeCancelledException and send notification message when "
+            + "the order status is different to PENDING in cancel order"
+    )
+    @EnumSource(value = OrderStatus.class, mode = EnumSource.Mode.EXCLUDE, names = { "PENDING" })
+    void shouldThrowOrderCannotBeCancelledExceptionAndSendNotificationWhenTheOrderHasInvalidStatusInCancelOrder(
+            OrderStatus invalidStatus
+    ) {
+        pendingOrder.setStatus(invalidStatus);
+        when(orderPersistencePort.findById(ORDER_ID)).thenReturn(Optional.of(pendingOrder));
+        when(userInformationPort.getUserById(CLIENT_ID)).thenReturn(customer);
+
+        assertThatThrownBy(() -> orderUseCase.cancelOrder(ORDER_ID, CLIENT_ID))
+                .isInstanceOf(OrderCannotBeCancelledException.class);
 
         verify(orderPersistencePort, never()).save(any());
     }
