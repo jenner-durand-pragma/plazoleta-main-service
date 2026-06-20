@@ -136,12 +136,39 @@ public class OrderRestController {
     }
 
     @IsEmployee
+    @Operation(summary = "Deliver an order using the customer's security PIN",
+            description = "Transitions the order from READY to DELIVERED if the provided PIN matches")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Order delivered",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = OrderResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid PIN format (not 6 digits)",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Caller is not an EMPLOYEE",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Employee without restaurant," +
+                    "order from different restaurant," +
+                    "order not in READY state," +
+                    "or PIN does not match",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
     @PatchMapping("/{orderId}/deliver")
     public ResponseEntity<OrderResponseDto> deliverOrder(
             @PathVariable Long orderId,
             @Valid @RequestBody DeliverOrderRequestDto request,
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
-        return null;
+        return ResponseEntity.ok(
+                orderHandler.markOrderDelivered(orderId, authenticatedUser.getUserId(), request)
+        );
     }
 }
