@@ -2,6 +2,7 @@ package com.pragma.plazoleta.application.handler;
 
 import com.pragma.plazoleta.application.dto.request.order.CreateOrderDishDto;
 import com.pragma.plazoleta.application.dto.request.order.CreateOrderRequestDto;
+import com.pragma.plazoleta.application.dto.request.order.DeliverOrderRequestDto;
 import com.pragma.plazoleta.application.handler.impl.OrderHandler;
 import com.pragma.plazoleta.application.mapper.IOrderRequestMapper;
 import com.pragma.plazoleta.application.mapper.IOrderResponseMapper;
@@ -185,6 +186,32 @@ class OrderHandlerTest {
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(orderId);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.READY);
+        assertThat(result.getRestaurantId()).isEqualTo(RESTAURANT_ID);
+        assertThat(result.getClientId()).isEqualTo(CLIENT_ID);
+    }
+
+    @Test
+    @DisplayName("Should return updated order response when data is valid in mark order delivered")
+    void shouldUpdatedOrderResponseWhenDataIsValidInMarkOrderDelivered() {
+        var employeeId = 5L;
+        var request = DeliverOrderRequestDto.builder()
+                .securityPin("123456")
+                .build();
+        var orderId = savedOrder.getId();
+
+        savedOrder.setStatus(OrderStatus.DELIVERED);
+        savedOrder.setChefId(employeeId);
+
+        when(orderServicePort.markOrderDelivered(eq(orderId), eq(employeeId), any(String.class))).thenReturn(savedOrder);
+
+        var result = orderHandler.markOrderDelivered(orderId, employeeId, request);
+
+        verify(orderServicePort).markOrderDelivered(orderId, employeeId, request.getSecurityPin());
+        verify(orderResponseMapper).toResponse(savedOrder);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(orderId);
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.DELIVERED);
         assertThat(result.getRestaurantId()).isEqualTo(RESTAURANT_ID);
         assertThat(result.getClientId()).isEqualTo(CLIENT_ID);
     }
