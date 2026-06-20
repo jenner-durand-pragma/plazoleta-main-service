@@ -92,6 +92,11 @@ public class OrderUseCase implements IOrderServicePort {
     }
 
     @Override
+    public Order markOrderDelivered(Long orderId, Long employeeId, String securityPin) {
+        return null;
+    }
+
+    @Override
     public PagedResult<Order> listOrdersByStatus(
             OrderStatus status,
             Long employeeId,
