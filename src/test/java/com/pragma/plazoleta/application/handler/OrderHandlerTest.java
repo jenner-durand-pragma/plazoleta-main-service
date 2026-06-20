@@ -175,11 +175,11 @@ class OrderHandlerTest {
         savedOrder.setStatus(OrderStatus.READY);
         savedOrder.setChefId(employeeId);
 
-        when(orderServicePort.assignOrder(orderId, employeeId)).thenReturn(savedOrder);
+        when(orderServicePort.markOrderReady(orderId, employeeId)).thenReturn(savedOrder);
 
-        var result = orderHandler.assignOrder(orderId, employeeId);
+        var result = orderHandler.markOrderReady(orderId, employeeId);
 
-        verify(orderServicePort).assignOrder(orderId, employeeId);
+        verify(orderServicePort).markOrderReady(orderId, employeeId);
         verify(orderResponseMapper).toResponse(savedOrder);
 
         assertThat(result).isNotNull();
