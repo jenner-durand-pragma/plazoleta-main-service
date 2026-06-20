@@ -52,8 +52,11 @@ public class OrderHandler implements IOrderHandler {
     }
 
     @Override
+    @Transactional
     public OrderResponseDto markOrderDelivered(Long orderId, Long employeeId, DeliverOrderRequestDto request) {
-        return null;
+        var delivered = orderServicePort.markOrderDelivered(orderId, employeeId, request.getSecurityPin());
+
+        return orderResponseMapper.toResponse(delivered);
     }
 
     @Override
