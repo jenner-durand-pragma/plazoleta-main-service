@@ -1,5 +1,6 @@
 package com.pragma.plazoleta.infrastructure.input.rest;
 
+import com.pragma.plazoleta.application.dto.request.order.DeliverOrderRequestDto;
 import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
 import com.pragma.plazoleta.application.dto.response.order.OrderResponseDto;
 import com.pragma.plazoleta.application.handler.IOrderHandler;
@@ -20,9 +21,12 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+
+import javax.validation.Valid;
 
 @RestController
 @RequestMapping("/api/v1/orders")
@@ -129,5 +133,42 @@ public class OrderRestController {
             @AuthenticationPrincipal AuthenticatedUser authenticatedUser
     ) {
         return ResponseEntity.ok(orderHandler.markOrderReady(orderId, authenticatedUser.getUserId()));
+    }
+
+    @IsEmployee
+    @Operation(summary = "Deliver an order using the customer's security PIN",
+            description = "Transitions the order from READY to DELIVERED if the provided PIN matches")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Order delivered",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = OrderResponseDto.class))),
+            @ApiResponse(responseCode = "400", description = "Invalid PIN format (not 6 digits)",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Caller is not an EMPLOYEE",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Employee without restaurant," +
+                    "order from different restaurant," +
+                    "order not in READY state," +
+                    "or PIN does not match",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PatchMapping("/{orderId}/deliver")
+    public ResponseEntity<OrderResponseDto> deliverOrder(
+            @PathVariable Long orderId,
+            @Valid @RequestBody DeliverOrderRequestDto request,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return ResponseEntity.ok(
+                orderHandler.markOrderDelivered(orderId, authenticatedUser.getUserId(), request)
+        );
     }
 }

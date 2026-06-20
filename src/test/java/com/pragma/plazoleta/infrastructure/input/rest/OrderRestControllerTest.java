@@ -1,5 +1,7 @@
 package com.pragma.plazoleta.infrastructure.input.rest;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.pragma.plazoleta.application.dto.request.order.DeliverOrderRequestDto;
 import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
 import com.pragma.plazoleta.application.dto.response.order.OrderResponseDto;
 import com.pragma.plazoleta.application.handler.IOrderHandler;
@@ -14,10 +16,14 @@ import com.pragma.plazoleta.infrastructure.exceptionhandler.GlobalExceptionHandl
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.context.annotation.Import;
+import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.test.web.servlet.MockMvc;
@@ -26,6 +32,7 @@ import java.util.List;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,10 +61,14 @@ class OrderRestControllerTest {
     @MockBean
     private IOrderHandler orderHandler;
 
+    private ObjectMapper objectMapper;
+
     private UsernamePasswordAuthenticationToken employeeAuthentication;
 
     @BeforeEach
     void setUp() {
+        objectMapper = new ObjectMapper();
+
         var employeePrincipal = new AuthenticatedUser(7L, "employee@plazoleta.com", "EMPLOYEE");
         employeeAuthentication = new UsernamePasswordAuthenticationToken(
                 employeePrincipal,
@@ -185,5 +196,48 @@ class OrderRestControllerTest {
                         .with(authentication(employeeAuthentication)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("READY"));
+    }
+
+    @Test
+    @DisplayName(
+            "Should return 200 with DELIVERED" +
+            "when EMPLOYEE delivers a READY order with correct PIN in mark order delivered"
+    )
+    void shouldReturn200WithDeliveredWhenEmployeeDeliversAReadyOrderWithCorrectPinInMarkOrderDelivered() throws Exception {
+        var request = DeliverOrderRequestDto.builder()
+                .securityPin("482910")
+                .build();
+        var response = OrderResponseDto.builder()
+                .id(42L)
+                .status(OrderStatus.DELIVERED)
+                .restaurantId(10L)
+                .clientId(5L)
+                .chefId(7L)
+                .build();
+        when(orderHandler.markOrderDelivered(
+                eq(42L),
+                eq(7L),
+                any(DeliverOrderRequestDto.class)
+        )).thenReturn(response);
+
+        mockMvc.perform(patch("/api/v1/orders/42/deliver")
+                        .with(authentication(employeeAuthentication))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status").value("DELIVERED"));
+    }
+
+    @ParameterizedTest(name = "Should return 400 when securityPin is invalid in mark order as delivered")
+    @NullSource
+    @ValueSource(strings = { "12345", "1234AB" })
+    void shouldReturn400WhenSecurityPinIsNotValidInMarkOrderDelivered(String securityPin) throws Exception {
+        var bad = DeliverOrderRequestDto.builder().securityPin(securityPin).build();
+
+        mockMvc.perform(patch("/api/v1/orders/42/deliver")
+                        .with(authentication(employeeAuthentication))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(bad)))
+                .andExpect(status().isBadRequest());
     }
 }

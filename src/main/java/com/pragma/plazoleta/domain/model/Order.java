@@ -3,6 +3,7 @@ package com.pragma.plazoleta.domain.model;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.exception.order.DuplicatedOrderDishException;
 import com.pragma.plazoleta.domain.exception.order.InvalidOrderStateException;
+import com.pragma.plazoleta.domain.exception.order.InvalidSecurityPinException;
 import com.pragma.plazoleta.domain.exception.order.OrderChefOwnershipException;
 import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
 import com.pragma.plazoleta.domain.exception.order.OrderEmployeeOwnershipException;
@@ -75,6 +76,18 @@ public class Order {
     public void checkStatusIsInPreparation() {
         if (status != OrderStatus.IN_PREPARATION) {
             throw InvalidOrderStateException.orderNotInPreparation(status.name());
+        }
+    }
+
+    public void checkStatusIsReady() {
+        if (status != OrderStatus.READY) {
+            throw InvalidOrderStateException.orderNotReady(status.name());
+        }
+    }
+
+    public void checkSecurityPin(String providedSecurityPin) {
+        if (securityPin == null || !securityPin.equals(providedSecurityPin)) {
+            throw new InvalidSecurityPinException();
         }
     }
 
