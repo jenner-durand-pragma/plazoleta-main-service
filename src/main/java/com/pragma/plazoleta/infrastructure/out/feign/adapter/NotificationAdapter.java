@@ -16,19 +16,30 @@ public class NotificationAdapter implements INotificationPort {
     private final INotificationFeignClient notificationFeignClient;
 
     private static final String MESSAGE_ORDER_READY_TEMPLATE = "Your order #%d is ready. PIN: %s";
+    private static final String MESSAGE_ORDER_CANNOT_BE_CANCELLED
+            = "Sorry, your order is already in preparation and cannot be cancelled.";
 
     @Override
     public void notifyOrderReady(Order order, String clientPhone) {
-        try {
-            var message = String.format(
-                    MESSAGE_ORDER_READY_TEMPLATE,
-                    order.getId(),
-                    order.getSecurityPin()
-            );
+        var message = String.format(
+                MESSAGE_ORDER_READY_TEMPLATE,
+                order.getId(),
+                order.getSecurityPin()
+        );
 
+        sendSmsNotification(message, clientPhone);
+    }
+
+    @Override
+    public void notifyOrderCannotCancelled(Order order, String clientPhone) {
+        return;
+    }
+
+    private void sendSmsNotification(String message, String phone) {
+        try {
             var sendSmsRequest = SendSmsRequestDto.builder()
                     .message(message)
-                    .to(clientPhone)
+                    .to(phone)
                     .build();
 
             notificationFeignClient.sendSms(sendSmsRequest);
@@ -37,14 +48,15 @@ public class NotificationAdapter implements INotificationPort {
                 log.warn("messaging-service rejected the SMS (status {}): {}", ex.status(), ex.contentUTF8());
             }
 
-            log.error("messaging-service unavailable when sending SMS for order {} (status {})", order.getId(), ex.status(), ex);
+            log.error(
+                    "messaging-service unavailable when sending SMS. Phone: {} Message: {} (status {})",
+                    phone,
+                    message,
+                    ex.status(),
+                    ex
+            );
 
             throw ex;
         }
-    }
-
-    @Override
-    public void notifyOrderCannotCancelled(Order order, String clientPhone) {
-        return;
     }
 }
