@@ -60,6 +60,12 @@ public class OrderHandler implements IOrderHandler {
     }
 
     @Override
+    @Transactional
+    public OrderResponseDto cancelOrder(Long orderId, Long clientId) {
+        return null;
+    }
+
+    @Override
     public PagedResponseDto<OrderResponseDto> listOrdersByStatus(
             OrderStatus status,
             Long employeeId,
