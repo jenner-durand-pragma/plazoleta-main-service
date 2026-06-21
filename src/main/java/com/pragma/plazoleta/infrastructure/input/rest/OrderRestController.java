@@ -5,6 +5,7 @@ import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
 import com.pragma.plazoleta.application.dto.response.order.OrderResponseDto;
 import com.pragma.plazoleta.application.handler.IOrderHandler;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
+import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsClient;
 import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsEmployee;
 import com.pragma.plazoleta.infrastructure.configuration.security.token.dto.AuthenticatedUser;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.common.ErrorResponse;
@@ -170,5 +171,14 @@ public class OrderRestController {
         return ResponseEntity.ok(
                 orderHandler.markOrderDelivered(orderId, authenticatedUser.getUserId(), request)
         );
+    }
+
+    @IsClient
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderResponseDto> cancelOrder(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return null;
     }
 }
