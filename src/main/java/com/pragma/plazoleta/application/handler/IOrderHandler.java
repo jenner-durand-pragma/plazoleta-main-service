@@ -12,6 +12,7 @@ public interface IOrderHandler {
     OrderResponseDto assignOrder(Long orderId, Long employeeId);
     OrderResponseDto markOrderReady(Long orderId, Long employeeId);
     OrderResponseDto markOrderDelivered(Long orderId, Long employeeId, DeliverOrderRequestDto request);
+    OrderResponseDto cancelOrder(Long orderId, Long clientId);
 
     PagedResponseDto<OrderResponseDto> listOrdersByStatus(
             OrderStatus status,

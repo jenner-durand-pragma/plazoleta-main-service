@@ -60,6 +60,14 @@ public class OrderHandler implements IOrderHandler {
     }
 
     @Override
+    @Transactional
+    public OrderResponseDto cancelOrder(Long orderId, Long clientId) {
+        var cancelled = orderServicePort.cancelOrder(orderId, clientId);
+
+        return orderResponseMapper.toResponse(cancelled);
+    }
+
+    @Override
     public PagedResponseDto<OrderResponseDto> listOrdersByStatus(
             OrderStatus status,
             Long employeeId,

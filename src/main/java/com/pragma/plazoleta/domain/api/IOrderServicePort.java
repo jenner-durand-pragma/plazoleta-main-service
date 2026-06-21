@@ -10,6 +10,7 @@ public interface IOrderServicePort {
     Order assignOrder(Long orderId, Long employeeId);
     Order markOrderReady(Long orderId, Long employeeId);
     Order markOrderDelivered(Long orderId, Long employeeId, String securityPin);
+    Order cancelOrder(Long orderId, Long clientId);
 
     PagedResult<Order> listOrdersByStatus(
             OrderStatus status,

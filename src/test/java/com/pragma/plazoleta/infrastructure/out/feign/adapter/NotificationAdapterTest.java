@@ -34,8 +34,11 @@ class NotificationAdapterTest {
     private NotificationAdapter notificationAdapter;
 
     @Test
-    @DisplayName("Should format message correctly and send SMS when notification-service responds successfully")
-    void shouldFormatMessageAndSendSmsSuccessfully() {
+    @DisplayName(
+            "Should format message correctly and send SMS when " +
+            "notification-service responds successfully in notify order ready"
+    )
+    void shouldFormatMessageAndSendSmsSuccessfullyInNotifyOrderReady() {
         var order = Order.builder()
                 .id(42L)
                 .securityPin("123456")
@@ -50,6 +53,30 @@ class NotificationAdapterTest {
         var capturedRequest = captor.getValue();
         assertThat(capturedRequest.getTo()).isEqualTo("+5198576854");
         assertThat(capturedRequest.getMessage()).isEqualTo("Your order #42 is ready. PIN: 123456");
+    }
+
+    @Test
+    @DisplayName(
+            "Should format message correctly and send SMS when " +
+            "notification-service responds successfully in notify order cannot cancelled"
+    )
+    void shouldFormatMessageAndSendSmsSuccessfullyInNotifyOrderCannotCancelled() {
+        var order = Order.builder()
+                .id(42L)
+                .securityPin("123456")
+                .build();
+        var customerPhone = "+5198576854";
+
+        notificationAdapter.notifyOrderCannotCancelled(order, customerPhone);
+
+        var captor = ArgumentCaptor.forClass(SendSmsRequestDto.class);
+        verify(notificationFeignClient).sendSms(captor.capture());
+
+        var capturedRequest = captor.getValue();
+        assertThat(capturedRequest.getTo()).isEqualTo("+5198576854");
+        assertThat(capturedRequest.getMessage()).isEqualTo(
+                "Sorry, your order is already in preparation and cannot be cancelled."
+        );
     }
 
     @Test

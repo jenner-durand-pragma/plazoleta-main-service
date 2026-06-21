@@ -215,4 +215,24 @@ class OrderHandlerTest {
         assertThat(result.getRestaurantId()).isEqualTo(RESTAURANT_ID);
         assertThat(result.getClientId()).isEqualTo(CLIENT_ID);
     }
+
+    @Test
+    @DisplayName("Should return updated order response when order is cancelled in cancel order")
+    void shouldUpdatedOrderResponseWhenOrderIsCancelledInCancelOrder() {
+        var orderId = savedOrder.getId();
+        savedOrder.setStatus(OrderStatus.CANCELLED);
+
+        when(orderServicePort.cancelOrder(orderId, CLIENT_ID)).thenReturn(savedOrder);
+
+        var result = orderHandler.cancelOrder(orderId, CLIENT_ID);
+
+        verify(orderServicePort).cancelOrder(orderId, CLIENT_ID);
+        verify(orderResponseMapper).toResponse(savedOrder);
+
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(orderId);
+        assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(result.getRestaurantId()).isEqualTo(RESTAURANT_ID);
+        assertThat(result.getClientId()).isEqualTo(CLIENT_ID);
+    }
 }

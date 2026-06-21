@@ -5,6 +5,7 @@ import com.pragma.plazoleta.application.dto.response.common.PagedResponseDto;
 import com.pragma.plazoleta.application.dto.response.order.OrderResponseDto;
 import com.pragma.plazoleta.application.handler.IOrderHandler;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
+import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsClient;
 import com.pragma.plazoleta.infrastructure.configuration.security.annotation.IsEmployee;
 import com.pragma.plazoleta.infrastructure.configuration.security.token.dto.AuthenticatedUser;
 import com.pragma.plazoleta.infrastructure.exceptionhandler.common.ErrorResponse;
@@ -169,6 +170,37 @@ public class OrderRestController {
     ) {
         return ResponseEntity.ok(
                 orderHandler.markOrderDelivered(orderId, authenticatedUser.getUserId(), request)
+        );
+    }
+
+    @IsClient
+    @Operation(summary = "Cancel an order",
+            description = "Cancels the order if it is still in PENDING.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Order cancelled",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = OrderResponseDto.class))),
+            @ApiResponse(responseCode = "401", description = "Authentication required",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "403", description = "Caller is not a CLIENT",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "404", description = "Order not found (or not owned by the caller)",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class))),
+            @ApiResponse(responseCode = "422", description = "Order cannot be cancelled," +
+                    "Order is not in PENDING status",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponse.class)))
+    })
+    @PatchMapping("/{orderId}/cancel")
+    public ResponseEntity<OrderResponseDto> cancelOrder(
+            @PathVariable Long orderId,
+            @AuthenticationPrincipal AuthenticatedUser authenticatedUser
+    ) {
+        return ResponseEntity.ok(
+                orderHandler.cancelOrder(orderId, authenticatedUser.getUserId())
         );
     }
 }

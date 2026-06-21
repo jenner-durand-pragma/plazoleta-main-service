@@ -64,6 +64,7 @@ class OrderRestControllerTest {
     private ObjectMapper objectMapper;
 
     private UsernamePasswordAuthenticationToken employeeAuthentication;
+    private UsernamePasswordAuthenticationToken clientAuthentication;
 
     @BeforeEach
     void setUp() {
@@ -74,6 +75,13 @@ class OrderRestControllerTest {
                 employeePrincipal,
                 null,
                 List.of(new SimpleGrantedAuthority("ROLE_EMPLOYEE"))
+        );
+
+        var clientPrincipal = new AuthenticatedUser(5L, "client@plazoleta.com", "CLIENT");
+        clientAuthentication = new UsernamePasswordAuthenticationToken(
+                clientPrincipal,
+                null,
+                List.of(new SimpleGrantedAuthority("ROLE_CLIENT"))
         );
     }
 
@@ -239,5 +247,23 @@ class OrderRestControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(bad)))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Should return 200 with CANCELLED when CLIENT cancels their PENDING order in cancel order")
+    void shouldReturn200WithCancelledWhenClientCancelsTheirPendingOrderInCancelOrder() throws Exception {
+        var response = OrderResponseDto.builder()
+                .id(42L)
+                .status(OrderStatus.CANCELLED)
+                .clientId(5L)
+                .build();
+        when(orderHandler.cancelOrder(42L, 5L))
+                .thenReturn(response);
+
+        mockMvc.perform(patch("/api/v1/orders/42/cancel")
+                        .with(authentication(clientAuthentication)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.status")
+                        .value("CANCELLED"));
     }
 }

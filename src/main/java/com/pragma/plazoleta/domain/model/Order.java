@@ -7,6 +7,7 @@ import com.pragma.plazoleta.domain.exception.order.InvalidSecurityPinException;
 import com.pragma.plazoleta.domain.exception.order.OrderChefOwnershipException;
 import com.pragma.plazoleta.domain.exception.order.OrderDishesEmptyException;
 import com.pragma.plazoleta.domain.exception.order.OrderEmployeeOwnershipException;
+import com.pragma.plazoleta.domain.exception.order.OrderNotBelongsToClientException;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -17,6 +18,7 @@ import java.security.SecureRandom;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 @Getter
@@ -67,20 +69,24 @@ public class Order {
         }
     }
 
+    public Boolean isStatus(OrderStatus orderStatus) {
+        return Objects.equals(orderStatus, this.status);
+    }
+
     public void checkStatusIsPending() {
-        if (status != OrderStatus.PENDING) {
+        if (Boolean.FALSE.equals(isStatus(OrderStatus.PENDING))) {
             throw InvalidOrderStateException.orderNotPending(status.name());
         }
     }
 
     public void checkStatusIsInPreparation() {
-        if (status != OrderStatus.IN_PREPARATION) {
+        if (Boolean.FALSE.equals(isStatus(OrderStatus.IN_PREPARATION))) {
             throw InvalidOrderStateException.orderNotInPreparation(status.name());
         }
     }
 
     public void checkStatusIsReady() {
-        if (status != OrderStatus.READY) {
+        if (Boolean.FALSE.equals(isStatus(OrderStatus.READY))) {
             throw InvalidOrderStateException.orderNotReady(status.name());
         }
     }
@@ -95,5 +101,11 @@ public class Order {
         var pin = SECURE_RANDOM.nextInt(900000) + 100000;
 
         securityPin = String.valueOf(pin);
+    }
+
+    public void checkBelongsToClient(Long clientId) {
+        if (!Objects.equals(clientId, this.clientId)) {
+            throw new OrderNotBelongsToClientException(id);
+        }
     }
 }
