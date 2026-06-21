@@ -32,7 +32,7 @@ public class NotificationAdapter implements INotificationPort {
 
     @Override
     public void notifyOrderCannotCancelled(Order order, String clientPhone) {
-        return;
+        sendSmsNotification(MESSAGE_ORDER_CANNOT_BE_CANCELLED, clientPhone);
     }
 
     private void sendSmsNotification(String message, String phone) {
