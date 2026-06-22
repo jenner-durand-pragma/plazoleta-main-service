@@ -9,6 +9,7 @@ import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
+import com.pragma.plazoleta.domain.spi.IOrderTraceabilityPort;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
@@ -18,8 +19,10 @@ import com.pragma.plazoleta.domain.usecase.OrderUseCase;
 import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.configuration.security.token.ITokenValidationPort;
 import com.pragma.plazoleta.infrastructure.out.feign.adapter.NotificationAdapter;
+import com.pragma.plazoleta.infrastructure.out.feign.adapter.OrderTraceabilityAdapter;
 import com.pragma.plazoleta.infrastructure.out.feign.adapter.UserInformationAdapter;
 import com.pragma.plazoleta.infrastructure.out.feign.client.INotificationFeignClient;
+import com.pragma.plazoleta.infrastructure.out.feign.client.IOrderTraceabilityFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IUserFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.mapper.IUserFeignMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.CategoryJpaAdapter;
@@ -66,6 +69,8 @@ public class BeanConfiguration {
     private final IOrderEntityMapper orderEntityMapper;
 
     private final INotificationFeignClient notificationFeignClient;
+
+    private final IOrderTraceabilityFeignClient orderTraceabilityFeignClient;
 
     private final JwtProperties jwtProperties;
 
@@ -146,6 +151,16 @@ public class BeanConfiguration {
     }
 
     @Bean
+    public IOrderTraceabilityPort orderTraceabilityPort(
+            ObjectMapper objectMapper
+    ) {
+        return new OrderTraceabilityAdapter(
+                orderTraceabilityFeignClient,
+                userInformationPort(objectMapper)
+        );
+    }
+
+    @Bean
     public IOrderServicePort orderServicePort(
             ObjectMapper objectMapper
     ) {
@@ -155,7 +170,8 @@ public class BeanConfiguration {
                 dishPersistencePort(),
                 restaurantEmployeePersistencePort(),
                 notificationPort(),
-                userInformationPort(objectMapper)
+                userInformationPort(objectMapper),
+                orderTraceabilityPort(objectMapper)
         );
     }
 }

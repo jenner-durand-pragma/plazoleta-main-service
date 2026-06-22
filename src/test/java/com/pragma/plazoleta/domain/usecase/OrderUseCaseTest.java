@@ -19,11 +19,13 @@ import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeWithoutR
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.model.OrderDish;
+import com.pragma.plazoleta.domain.model.OrderState;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.model.UserInformation;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
+import com.pragma.plazoleta.domain.spi.IOrderTraceabilityPort;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
@@ -33,7 +35,6 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
-import org.junit.jupiter.params.provider.NullSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
@@ -45,7 +46,6 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.in;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.never;
@@ -72,6 +72,9 @@ class OrderUseCaseTest {
 
     @Mock
     private IUserInformationPort userInformationPort;
+
+    @Mock
+    private IOrderTraceabilityPort orderTraceabilityPort;
 
     @InjectMocks
     private OrderUseCase orderUseCase;
@@ -212,6 +215,16 @@ class OrderUseCaseTest {
         assertThat(result.getItems().get(0).getOrderId()).isEqualTo(100L);
         assertThat(result.getItems().get(1).getOrderId()).isEqualTo(100L);
         assertThat(result.getId()).isEqualTo(100L);
+
+        var stateCaptor = ArgumentCaptor.forClass(OrderState.class);
+        verify(orderTraceabilityPort).saveState(stateCaptor.capture());
+
+        var capturedState = stateCaptor.getValue();
+        assertThat(capturedState.getOrderId()).isEqualTo(100L);
+        assertThat(capturedState.getClientId()).isEqualTo(CLIENT_ID);
+        assertThat(capturedState.getPreviousStatus()).isNull();
+        assertThat(capturedState.getNewStatus()).isEqualTo(OrderStatus.PENDING);
+        assertThat(capturedState.getEmployeeId()).isNull();
     }
 
     @Test
@@ -363,6 +376,15 @@ class OrderUseCaseTest {
         assertThat(persisted.getChefId()).isEqualTo(EMPLOYEE_ID);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
         assertThat(result.getChefId()).isEqualTo(EMPLOYEE_ID);
+
+        var stateCaptor = ArgumentCaptor.forClass(OrderState.class);
+        verify(orderTraceabilityPort).saveState(stateCaptor.capture());
+
+        var capturedState = stateCaptor.getValue();
+        assertThat(capturedState.getOrderId()).isEqualTo(ORDER_ID);
+        assertThat(capturedState.getPreviousStatus()).isEqualTo(OrderStatus.PENDING);
+        assertThat(capturedState.getNewStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
+        assertThat(capturedState.getEmployeeId()).isEqualTo(EMPLOYEE_ID);
     }
 
     @Test
@@ -465,6 +487,15 @@ class OrderUseCaseTest {
         assertThat(result.getStatus()).isEqualTo(OrderStatus.READY);
 
         verify(notificationPort).notifyOrderReady(persisted, "+5198576854");
+
+        var stateCaptor = ArgumentCaptor.forClass(OrderState.class);
+        verify(orderTraceabilityPort).saveState(stateCaptor.capture());
+
+        var capturedState = stateCaptor.getValue();
+        assertThat(capturedState.getOrderId()).isEqualTo(ORDER_ID);
+        assertThat(capturedState.getPreviousStatus()).isEqualTo(OrderStatus.IN_PREPARATION);
+        assertThat(capturedState.getNewStatus()).isEqualTo(OrderStatus.READY);
+        assertThat(capturedState.getEmployeeId()).isEqualTo(EMPLOYEE_ID);
     }
 
     @Test
@@ -573,6 +604,15 @@ class OrderUseCaseTest {
         verify(orderPersistencePort).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.DELIVERED);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.DELIVERED);
+
+        var stateCaptor = ArgumentCaptor.forClass(OrderState.class);
+        verify(orderTraceabilityPort).saveState(stateCaptor.capture());
+
+        var capturedState = stateCaptor.getValue();
+        assertThat(capturedState.getOrderId()).isEqualTo(ORDER_ID);
+        assertThat(capturedState.getPreviousStatus()).isEqualTo(OrderStatus.READY);
+        assertThat(capturedState.getNewStatus()).isEqualTo(OrderStatus.DELIVERED);
+        assertThat(capturedState.getEmployeeId()).isEqualTo(EMPLOYEE_ID);
     }
 
     @Test
@@ -674,6 +714,16 @@ class OrderUseCaseTest {
         verify(orderPersistencePort).save(captor.capture());
         assertThat(captor.getValue().getStatus()).isEqualTo(OrderStatus.CANCELLED);
         assertThat(result.getStatus()).isEqualTo(OrderStatus.CANCELLED);
+
+        var stateCaptor = ArgumentCaptor.forClass(OrderState.class);
+        verify(orderTraceabilityPort).saveState(stateCaptor.capture());
+
+        var capturedState = stateCaptor.getValue();
+        assertThat(capturedState.getOrderId()).isEqualTo(ORDER_ID);
+        assertThat(capturedState.getClientId()).isEqualTo(CLIENT_ID);
+        assertThat(capturedState.getPreviousStatus()).isEqualTo(OrderStatus.PENDING);
+        assertThat(capturedState.getNewStatus()).isEqualTo(OrderStatus.CANCELLED);
+        assertThat(capturedState.getEmployeeId()).isNull();
     }
 
     @Test
