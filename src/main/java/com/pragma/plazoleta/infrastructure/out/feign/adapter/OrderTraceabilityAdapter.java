@@ -60,7 +60,14 @@ public class OrderTraceabilityAdapter implements IOrderTraceabilityPort {
 
     @Override
     public OrderTraceability findByOrderId(Long orderId) {
-        return null;
+        try {
+            var orderTraceabilityResponse = orderTraceabilityFeignClient.findByOrderId(orderId);
+
+            return orderTraceabilityFeignMapper.toModel(orderTraceabilityResponse);
+        } catch (FeignException.NotFound e) {
+
+            return null;
+        }
     }
 
     private OrderStateUserInformationDto resolverUser(Long userId) {
