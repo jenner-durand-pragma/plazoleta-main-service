@@ -1,11 +1,13 @@
 package com.pragma.plazoleta.infrastructure.out.feign.adapter;
 
 import com.pragma.plazoleta.domain.model.OrderState;
+import com.pragma.plazoleta.domain.model.OrderTraceability;
 import com.pragma.plazoleta.domain.spi.IOrderTraceabilityPort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IOrderTraceabilityFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.dto.OrderStateRequestDto;
 import com.pragma.plazoleta.infrastructure.out.feign.dto.OrderStateUserInformationDto;
+import com.pragma.plazoleta.infrastructure.out.feign.mapper.IOrderTraceabilityFeignMapper;
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,6 +18,7 @@ public class OrderTraceabilityAdapter implements IOrderTraceabilityPort {
 
     private final IOrderTraceabilityFeignClient orderTraceabilityFeignClient;
     private final IUserInformationPort userInformationPort;
+    private final IOrderTraceabilityFeignMapper orderTraceabilityFeignMapper;
 
     @Override
     public void saveState(OrderState orderState) {
@@ -53,6 +56,11 @@ public class OrderTraceabilityAdapter implements IOrderTraceabilityPort {
 
             throw ex;
         }
+    }
+
+    @Override
+    public OrderTraceability findByOrderId(Long orderId) {
+        return null;
     }
 
     private OrderStateUserInformationDto resolverUser(Long userId) {

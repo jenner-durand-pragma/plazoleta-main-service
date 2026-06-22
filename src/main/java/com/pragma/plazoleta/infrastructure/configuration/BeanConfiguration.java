@@ -24,6 +24,7 @@ import com.pragma.plazoleta.infrastructure.out.feign.adapter.UserInformationAdap
 import com.pragma.plazoleta.infrastructure.out.feign.client.INotificationFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IOrderTraceabilityFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IUserFeignClient;
+import com.pragma.plazoleta.infrastructure.out.feign.mapper.IOrderTraceabilityFeignMapper;
 import com.pragma.plazoleta.infrastructure.out.feign.mapper.IUserFeignMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.CategoryJpaAdapter;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.DishJpaAdapter;
@@ -71,6 +72,7 @@ public class BeanConfiguration {
     private final INotificationFeignClient notificationFeignClient;
 
     private final IOrderTraceabilityFeignClient orderTraceabilityFeignClient;
+    private final IOrderTraceabilityFeignMapper orderTraceabilityFeignMapper;
 
     private final JwtProperties jwtProperties;
 
@@ -156,7 +158,8 @@ public class BeanConfiguration {
     ) {
         return new OrderTraceabilityAdapter(
                 orderTraceabilityFeignClient,
-                userInformationPort(objectMapper)
+                userInformationPort(objectMapper),
+                orderTraceabilityFeignMapper
         );
     }
 
