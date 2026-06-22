@@ -17,5 +17,8 @@ users-service:
   url: http://localhost:8091
 messaging-service:
   url: http://localhost:8093
+traceability-service:
+  url: http://localhost:8095
+
 appDescription: "Pragma Plazoleta - Main Service Test"
 appVersion: "1.0.0"
