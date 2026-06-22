@@ -12,10 +12,12 @@ import com.pragma.plazoleta.domain.exception.restaurantemployee.EmployeeWithoutR
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.model.OrderDish;
+import com.pragma.plazoleta.domain.model.OrderState;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
+import com.pragma.plazoleta.domain.spi.IOrderTraceabilityPort;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
@@ -34,6 +36,7 @@ public class OrderUseCase implements IOrderServicePort {
     private final IRestaurantEmployeePersistencePort restaurantEmployeePersistencePort;
     private final INotificationPort notificationPort;
     private final IUserInformationPort userInformationPort;
+    private final IOrderTraceabilityPort orderTraceabilityPort;
 
     @Override
     public Order createOrder(Order order, Long clientId) {
@@ -56,7 +59,11 @@ public class OrderUseCase implements IOrderServicePort {
                 .chefId(null)
                 .build();
 
-        return orderPersistencePort.save(newOrder);
+        var savedOrder = orderPersistencePort.save(newOrder);
+
+        captureState(savedOrder, null, null);
+
+        return savedOrder;
     }
 
     @Override
@@ -67,10 +74,16 @@ public class OrderUseCase implements IOrderServicePort {
         order.checkEmployeeRestaurantBelongsToOrderRestaurant(employeeRestaurantId);
         order.checkStatusIsPending();
 
+        var previousStatus = order.getStatus();
+
         order.setChefId(employeeId);
         order.setStatus(OrderStatus.IN_PREPARATION);
 
-        return orderPersistencePort.save(order);
+        var savedOrder = orderPersistencePort.save(order);
+
+        captureState(savedOrder, previousStatus, employeeId);
+
+        return savedOrder;
     }
 
     @Override
@@ -82,12 +95,16 @@ public class OrderUseCase implements IOrderServicePort {
         order.checkEmployeeIsAssignedChef(employeeId);
         order.checkStatusIsInPreparation();
 
+        var previousStatus = order.getStatus();
+
         order.generateSixDigitPin();
         order.setStatus(OrderStatus.READY);
         var savedOrder = orderPersistencePort.save(order);
 
         var customer = userInformationPort.getUserById(savedOrder.getClientId());
         notificationPort.notifyOrderReady(savedOrder, customer.getPhone());
+
+        captureState(savedOrder, previousStatus, employeeId);
 
         return savedOrder;
     }
@@ -101,9 +118,15 @@ public class OrderUseCase implements IOrderServicePort {
         order.checkStatusIsReady();
         order.checkSecurityPin(securityPin);
 
+        var previousStatus = order.getStatus();
+
         order.setStatus(OrderStatus.DELIVERED);
 
-        return orderPersistencePort.save(order);
+        var savedOrder = orderPersistencePort.save(order);
+
+        captureState(savedOrder, previousStatus, employeeId);
+
+        return savedOrder;
     }
 
     @Override
@@ -113,9 +136,15 @@ public class OrderUseCase implements IOrderServicePort {
         order.checkBelongsToClient(clientId);
         ensureOrderIsPendingToCancel(order);
 
+        var previousStatus = order.getStatus();
+
         order.setStatus(OrderStatus.CANCELLED);
 
-        return orderPersistencePort.save(order);
+        var savedOrder = orderPersistencePort.save(order);
+
+        captureState(savedOrder, previousStatus, null);
+
+        return savedOrder;
     }
 
     @Override
@@ -207,5 +236,19 @@ public class OrderUseCase implements IOrderServicePort {
                             .build();
                 })
                 .collect(Collectors.toList());
+    }
+
+    private void captureState(Order order, OrderStatus previousStatus, Long employeeId) {
+        var orderState = OrderState.builder()
+                .orderId(order.getId())
+                .clientId(order.getClientId())
+                .restaurantId(order.getRestaurant().getId())
+                .previousStatus(previousStatus)
+                .newStatus(order.getStatus())
+                .employeeId(employeeId)
+                .changedAt(LocalDateTime.now())
+                .build();
+
+        orderTraceabilityPort.saveState(orderState);
     }
 }
