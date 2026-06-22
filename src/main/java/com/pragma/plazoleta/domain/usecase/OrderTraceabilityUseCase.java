@@ -1,6 +1,8 @@
 package com.pragma.plazoleta.domain.usecase;
 
 import com.pragma.plazoleta.domain.api.IOrderTraceabilityServicePort;
+import com.pragma.plazoleta.domain.exception.order.OrderNotFoundException;
+import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.model.OrderTraceability;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.domain.spi.IOrderTraceabilityPort;
@@ -14,6 +16,15 @@ public class OrderTraceabilityUseCase implements IOrderTraceabilityServicePort {
 
     @Override
     public OrderTraceability findByOrderIdForClient(Long orderId, Long clientId) {
-        return null;
+        var order = resolveOrder(orderId);
+
+        order.checkBelongsToClient(clientId);
+
+        return orderTraceabilityPort.findByOrderId(orderId);
+    }
+
+    private Order resolveOrder(Long orderId) {
+        return orderPersistencePort.findById(orderId)
+                .orElseThrow(() -> new OrderNotFoundException(orderId));
     }
 }
