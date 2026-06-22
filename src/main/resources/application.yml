@@ -32,7 +32,7 @@ users-service:
 messaging-service:
   url: ${MESSAGING_SERVICE_URL:http://localhost:8093}
 traceability-service:
-  url: ${TRACEABILITY_SERVICE_URL:http://localhost:8093}
+  url: ${TRACEABILITY_SERVICE_URL:http://localhost:8095}
 
 springdoc:
   api-docs:

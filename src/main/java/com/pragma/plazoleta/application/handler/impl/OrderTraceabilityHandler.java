@@ -5,7 +5,9 @@ import com.pragma.plazoleta.application.handler.IOrderTraceabilityHandler;
 import com.pragma.plazoleta.application.mapper.IOrderTraceabilityResponseMapper;
 import com.pragma.plazoleta.domain.api.IOrderTraceabilityServicePort;
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
 
+@Service
 @RequiredArgsConstructor
 public class OrderTraceabilityHandler implements IOrderTraceabilityHandler {
 

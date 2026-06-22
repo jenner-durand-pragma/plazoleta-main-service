@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.domain.api.IDishServicePort;
 import com.pragma.plazoleta.domain.api.IEmployeeServicePort;
 import com.pragma.plazoleta.domain.api.IOrderServicePort;
+import com.pragma.plazoleta.domain.api.IOrderTraceabilityServicePort;
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
 import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
@@ -15,6 +16,7 @@ import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import com.pragma.plazoleta.domain.usecase.DishUseCase;
 import com.pragma.plazoleta.domain.usecase.EmployeeUseCase;
+import com.pragma.plazoleta.domain.usecase.OrderTraceabilityUseCase;
 import com.pragma.plazoleta.domain.usecase.OrderUseCase;
 import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.configuration.security.token.ITokenValidationPort;
@@ -175,6 +177,16 @@ public class BeanConfiguration {
                 notificationPort(),
                 userInformationPort(objectMapper),
                 orderTraceabilityPort(objectMapper)
+        );
+    }
+
+    @Bean
+    public IOrderTraceabilityServicePort orderTraceabilityServicePort(
+            ObjectMapper objectMapper
+    ) {
+        return new OrderTraceabilityUseCase(
+                orderTraceabilityPort(objectMapper),
+                orderPersistencePort()
         );
     }
 }
