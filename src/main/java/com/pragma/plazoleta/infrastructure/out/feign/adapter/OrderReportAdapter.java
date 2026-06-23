@@ -16,11 +16,15 @@ public class OrderReportAdapter implements IOrderReportQueryPort {
 
     @Override
     public PagedResult<OrderEfficiency> getOrderEfficiency(Long restaurantId, Integer page, Integer size) {
-        return null;
+        return orderReportFeignClient.getOrderEfficiency(restaurantId, page, size)
+                .toPageResult()
+                .mapTo(orderReportFeignMapper::toModelOrder);
     }
 
     @Override
     public PagedResult<EmployeeEfficiency> getEmployeeRanking(Long restaurantId, Integer page, Integer size) {
-        return null;
+        return orderReportFeignClient.getEmployeeRanking(restaurantId, page, size)
+                .toPageResult()
+                .mapTo(orderReportFeignMapper::toModelEmployee);
     }
 }
