@@ -5,7 +5,7 @@ import com.pragma.plazoleta.domain.api.IOrderTraceabilityServicePort;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.model.OrderStateTraceability;
 import com.pragma.plazoleta.domain.model.OrderTraceability;
-import com.pragma.plazoleta.domain.model.OrderUserTraceability;
+import com.pragma.plazoleta.domain.model.OrderUser;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -43,14 +43,14 @@ class OrderTraceabilityHandlerTest {
 
     @BeforeEach
     void setUp() {
-        var client = OrderUserTraceability.builder()
+        var client = OrderUser.builder()
                 .id(CLIENT_ID)
                 .name("Jenner")
                 .lastName("Durand")
                 .email("jenner.durand@plazoleta.com")
                 .build();
 
-        var employee = OrderUserTraceability.builder()
+        var employee = OrderUser.builder()
                 .id(1L)
                 .name("Admin")
                 .lastName("Plazoleta")

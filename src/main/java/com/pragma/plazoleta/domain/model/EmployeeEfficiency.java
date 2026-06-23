@@ -11,10 +11,9 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderUserTraceability {
+public class EmployeeEfficiency {
 
-    private Long id;
-    private String name;
-    private String lastName;
-    private String email;
+    private OrderUser employee;
+    private Double averageMinutes;
+    private Long ordersHandled;
 }

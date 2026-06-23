@@ -30,5 +30,5 @@ public class OrderStateTraceabilityResponseDto {
     private LocalDateTime changedAt;
 
     @Schema(description = "Employee information")
-    private OrderUserTraceabilityResponseDto employee;
+    private OrderUserResponseDto employee;
 }

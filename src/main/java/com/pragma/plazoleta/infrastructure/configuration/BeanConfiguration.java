@@ -3,6 +3,7 @@ package com.pragma.plazoleta.infrastructure.configuration;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.pragma.plazoleta.domain.api.IDishServicePort;
 import com.pragma.plazoleta.domain.api.IEmployeeServicePort;
+import com.pragma.plazoleta.domain.api.IOrderReportServicePort;
 import com.pragma.plazoleta.domain.api.IOrderServicePort;
 import com.pragma.plazoleta.domain.api.IOrderTraceabilityServicePort;
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
@@ -10,22 +11,27 @@ import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
+import com.pragma.plazoleta.domain.spi.IOrderReportQueryPort;
 import com.pragma.plazoleta.domain.spi.IOrderTraceabilityPort;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import com.pragma.plazoleta.domain.usecase.DishUseCase;
 import com.pragma.plazoleta.domain.usecase.EmployeeUseCase;
+import com.pragma.plazoleta.domain.usecase.OrderReportUseCase;
 import com.pragma.plazoleta.domain.usecase.OrderTraceabilityUseCase;
 import com.pragma.plazoleta.domain.usecase.OrderUseCase;
 import com.pragma.plazoleta.domain.usecase.RestaurantUseCase;
 import com.pragma.plazoleta.infrastructure.configuration.security.token.ITokenValidationPort;
 import com.pragma.plazoleta.infrastructure.out.feign.adapter.NotificationAdapter;
+import com.pragma.plazoleta.infrastructure.out.feign.adapter.OrderReportAdapter;
 import com.pragma.plazoleta.infrastructure.out.feign.adapter.OrderTraceabilityAdapter;
 import com.pragma.plazoleta.infrastructure.out.feign.adapter.UserInformationAdapter;
 import com.pragma.plazoleta.infrastructure.out.feign.client.INotificationFeignClient;
+import com.pragma.plazoleta.infrastructure.out.feign.client.IOrderReportFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IOrderTraceabilityFeignClient;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IUserFeignClient;
+import com.pragma.plazoleta.infrastructure.out.feign.mapper.IOrderReportFeignMapper;
 import com.pragma.plazoleta.infrastructure.out.feign.mapper.IOrderTraceabilityFeignMapper;
 import com.pragma.plazoleta.infrastructure.out.feign.mapper.IUserFeignMapper;
 import com.pragma.plazoleta.infrastructure.out.jpa.adapter.CategoryJpaAdapter;
@@ -75,6 +81,9 @@ public class BeanConfiguration {
 
     private final IOrderTraceabilityFeignClient orderTraceabilityFeignClient;
     private final IOrderTraceabilityFeignMapper orderTraceabilityFeignMapper;
+
+    private final IOrderReportFeignClient orderReportFeignClient;
+    private final IOrderReportFeignMapper orderReportFeignMapper;
 
     private final JwtProperties jwtProperties;
 
@@ -187,6 +196,22 @@ public class BeanConfiguration {
         return new OrderTraceabilityUseCase(
                 orderTraceabilityPort(objectMapper),
                 orderPersistencePort()
+        );
+    }
+
+    @Bean
+    public IOrderReportQueryPort orderReportQueryPort() {
+        return new OrderReportAdapter(
+                orderReportFeignClient,
+                orderReportFeignMapper
+        );
+    }
+
+    @Bean
+    public IOrderReportServicePort orderReportServicePort() {
+        return new OrderReportUseCase(
+                orderReportQueryPort(),
+                restaurantPersistencePort()
         );
     }
 }

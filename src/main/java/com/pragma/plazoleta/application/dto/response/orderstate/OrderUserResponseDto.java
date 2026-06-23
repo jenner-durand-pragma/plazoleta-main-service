@@ -12,7 +12,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class OrderUserTraceabilityResponseDto {
+public class OrderUserResponseDto {
 
     @Schema(description = "User id", example = "10")
     private Long id;

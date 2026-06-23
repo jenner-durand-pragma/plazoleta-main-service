@@ -19,5 +19,5 @@ public class OrderStateTraceability {
     private OrderStatus previousStatus;
     private OrderStatus newStatus;
     private LocalDateTime changedAt;
-    private OrderUserTraceability employee;
+    private OrderUser employee;
 }
