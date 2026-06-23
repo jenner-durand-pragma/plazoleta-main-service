@@ -129,8 +129,6 @@ class OrderReportAdapterTest {
                 .isInstanceOf(FeignException.InternalServerError.class);
     }
 
-    // --- TESTS PARA GET EMPLOYEE RANKING ---
-
     @Test
     @DisplayName(
             "Should fetch, map and return paged employee ranking when " +
