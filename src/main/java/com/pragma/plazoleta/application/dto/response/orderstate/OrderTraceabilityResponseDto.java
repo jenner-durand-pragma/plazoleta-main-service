@@ -19,7 +19,7 @@ public class OrderTraceabilityResponseDto {
     @Schema(description = "Order id", example = "42")
     private Long orderId;
 
-    private OrderUserTraceabilityResponseDto client;
+    private OrderUserResponseDto client;
 
     private List<OrderStateTraceabilityResponseDto> transitions;
 }
