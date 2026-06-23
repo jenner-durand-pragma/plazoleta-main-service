@@ -1,5 +1,6 @@
-package com.pragma.plazoleta.application.handler.impl;
+package com.pragma.plazoleta.application.handler;
 
+import com.pragma.plazoleta.application.handler.impl.OrderTraceabilityHandler;
 import com.pragma.plazoleta.application.mapper.IOrderTraceabilityResponseMapper;
 import com.pragma.plazoleta.domain.api.IOrderTraceabilityServicePort;
 import com.pragma.plazoleta.domain.enums.OrderStatus;
