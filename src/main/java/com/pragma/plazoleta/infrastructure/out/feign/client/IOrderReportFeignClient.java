@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 @FeignClient(
         name = "traceability-service",
         url = "${traceability-service.url}",
+        contextId = "reportOrderClient",
         path = "/api/v1/traceability/restaurants"
 )
 public interface IOrderReportFeignClient {
