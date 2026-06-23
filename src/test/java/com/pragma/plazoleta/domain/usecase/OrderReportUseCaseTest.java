@@ -7,7 +7,6 @@ import com.pragma.plazoleta.domain.model.EmployeeEfficiency;
 import com.pragma.plazoleta.domain.model.OrderEfficiency;
 import com.pragma.plazoleta.domain.model.OrderUser;
 import com.pragma.plazoleta.domain.model.Restaurant;
-import com.pragma.plazoleta.domain.model.UserInformation;
 import com.pragma.plazoleta.domain.spi.IOrderReportQueryPort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import org.junit.jupiter.api.BeforeEach;
