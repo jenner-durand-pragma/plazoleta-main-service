@@ -29,6 +29,7 @@ ext {
 	jjwtVersion = "0.11.5"
 	springCloudVersion = "2021.0.5"
 	testcontainersVersion = "1.19.3"
+	embeddedRedisVersion = "1.4.3"
 }
 
 dependencyManagement {
@@ -44,6 +45,7 @@ dependencies {
 	implementation "org.springframework.boot:spring-boot-starter-validation:${springBootVersion}"
 	implementation "org.springframework.boot:spring-boot-starter-web:${springBootVersion}"
 	implementation "org.springframework.boot:spring-boot-starter-security:${springBootVersion}"
+	implementation "org.springframework.boot:spring-boot-starter-data-redis:${springBootVersion}"
 	developmentOnly "org.springframework.boot:spring-boot-devtools:${springBootVersion}"
 
 	// ─── Spring Cloud (OpenFeign for inter-service calls) ──
@@ -74,6 +76,7 @@ dependencies {
 		exclude group: 'org.junit.vintage', module: 'junit-vintage-engine'
 	}
 	testImplementation "org.springframework.security:spring-security-test"
+	testImplementation "com.github.codemonstur:embedded-redis:${embeddedRedisVersion}"
 	testImplementation "org.testcontainers:junit-jupiter"
 	testImplementation "org.testcontainers:mysql"
 	testRuntimeOnly "com.h2database:h2"
