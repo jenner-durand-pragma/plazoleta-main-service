@@ -6,6 +6,7 @@ import com.pragma.plazoleta.domain.exception.restaurant.NitAlreadyExistsExceptio
 import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
 import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.model.UserInformation;
+import com.pragma.plazoleta.domain.service.IRestaurantCacheService;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import org.junit.jupiter.api.BeforeEach;
@@ -27,6 +28,9 @@ import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class RestaurantUseCaseTest {
+
+    @Mock
+    private IRestaurantCacheService restaurantCacheService;
 
     @Mock
     private IRestaurantPersistencePort restaurantPersistencePort;
@@ -69,7 +73,7 @@ class RestaurantUseCaseTest {
                 .thenReturn(ownerUser);
         when(restaurantPersistencePort.existsByNit("9001234567"))
                 .thenReturn(false);
-        when(restaurantPersistencePort.save(any(Restaurant.class)))
+        when(restaurantCacheService.saveRestaurant(any(Restaurant.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         var result = restaurantUseCase.createRestaurant(validRestaurant);
@@ -77,7 +81,7 @@ class RestaurantUseCaseTest {
         assertThat(result).isNotNull();
         assertThat(result.getNit()).isEqualTo("9001234567");
 
-        verify(restaurantPersistencePort).save(any(Restaurant.class));
+        verify(restaurantCacheService).saveRestaurant(any(Restaurant.class));
     }
 
     @Test
@@ -97,7 +101,7 @@ class RestaurantUseCaseTest {
         assertThatThrownBy(() -> restaurantUseCase.createRestaurant(validRestaurant))
                 .isInstanceOf(UserIsNotOwnerException.class);
 
-        verify(restaurantPersistencePort, never()).save(any(Restaurant.class));
+        verify(restaurantCacheService, never()).saveRestaurant(any(Restaurant.class));
     }
 
     @Test
@@ -108,7 +112,7 @@ class RestaurantUseCaseTest {
         assertThatThrownBy(() -> restaurantUseCase.createRestaurant(validRestaurant))
                 .isInstanceOf(UserIsNotOwnerException.class);
 
-        verify(restaurantPersistencePort, never()).save(any(Restaurant.class));
+        verify(restaurantCacheService, never()).saveRestaurant(any(Restaurant.class));
     }
 
     @Test
@@ -120,7 +124,7 @@ class RestaurantUseCaseTest {
         assertThatThrownBy(() -> restaurantUseCase.createRestaurant(validRestaurant))
                 .isInstanceOf(NitAlreadyExistsException.class);
 
-        verify(restaurantPersistencePort, never()).save(any(Restaurant.class));
+        verify(restaurantCacheService, never()).saveRestaurant(any(Restaurant.class));
     }
 
     @Test
@@ -137,7 +141,7 @@ class RestaurantUseCaseTest {
                 .build();
         var paged = PagedResult.of(List.of(r1, r2), 0, 10, 2L, 1);
 
-        when(restaurantPersistencePort.findAllPaginatedByNameAsc(0, 10)).thenReturn(paged);
+        when(restaurantCacheService.listRestaurants(0, 10)).thenReturn(paged);
 
         var result = restaurantUseCase.listRestaurants(0, 10);
 
@@ -153,7 +157,7 @@ class RestaurantUseCaseTest {
         List<Restaurant> emptyList = List.of();
         var emptyPagedResult = PagedResult.of(emptyList, 0, 10, 0L, 0);
 
-        when(restaurantPersistencePort.findAllPaginatedByNameAsc(0, 10)).thenReturn(emptyPagedResult);
+        when(restaurantCacheService.listRestaurants(0, 10)).thenReturn(emptyPagedResult);
 
         var result = restaurantUseCase.listRestaurants(0, 10);
 
@@ -167,7 +171,7 @@ class RestaurantUseCaseTest {
         assertThatThrownBy(() -> restaurantUseCase.listRestaurants(-1, 10))
                 .isInstanceOf(InvalidPaginationException.class);
 
-        verify(restaurantPersistencePort, never()).findAllPaginatedByNameAsc(any(Integer.class), any(Integer.class));
+        verify(restaurantCacheService, never()).listRestaurants(any(Integer.class), any(Integer.class));
     }
 
     @Test
@@ -179,7 +183,7 @@ class RestaurantUseCaseTest {
         assertThatThrownBy(() -> restaurantUseCase.listRestaurants(0, -5))
                 .isInstanceOf(InvalidPaginationException.class);
 
-        verify(restaurantPersistencePort, never()).findAllPaginatedByNameAsc(any(Integer.class), any(Integer.class));
+        verify(restaurantCacheService, never()).listRestaurants(any(Integer.class), any(Integer.class));
     }
 
     @Test
@@ -188,6 +192,6 @@ class RestaurantUseCaseTest {
         assertThatThrownBy(() -> restaurantUseCase.listRestaurants(0, 101))
                 .isInstanceOf(InvalidPaginationException.class);
 
-        verify(restaurantPersistencePort, never()).findAllPaginatedByNameAsc(any(Integer.class), any(Integer.class));
+        verify(restaurantCacheService, never()).listRestaurants(any(Integer.class), any(Integer.class));
     }
 }

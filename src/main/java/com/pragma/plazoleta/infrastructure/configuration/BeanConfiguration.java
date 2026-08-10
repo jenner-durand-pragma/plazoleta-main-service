@@ -7,12 +7,15 @@ import com.pragma.plazoleta.domain.api.IOrderReportServicePort;
 import com.pragma.plazoleta.domain.api.IOrderServicePort;
 import com.pragma.plazoleta.domain.api.IOrderTraceabilityServicePort;
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
+import com.pragma.plazoleta.domain.service.IRestaurantCacheService;
+import com.pragma.plazoleta.domain.service.impl.RestaurantCacheServiceImpl;
 import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
 import com.pragma.plazoleta.domain.spi.IOrderReportQueryPort;
 import com.pragma.plazoleta.domain.spi.IOrderTraceabilityPort;
+import com.pragma.plazoleta.domain.spi.IRestaurantCachePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantEmployeePersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
@@ -49,11 +52,15 @@ import com.pragma.plazoleta.infrastructure.out.jpa.repository.IDishRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IOrderRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantEmployeeRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantRepository;
+import com.pragma.plazoleta.infrastructure.out.redis.adapter.RestaurantCacheAdapter;
+import com.pragma.plazoleta.infrastructure.out.redis.mapper.IRestaurantCacheEntityMapper;
+import com.pragma.plazoleta.infrastructure.out.redis.repository.IRestaurantCacheRepository;
 import com.pragma.plazoleta.infrastructure.out.security.jwt.JwtAdapter;
 import com.pragma.plazoleta.infrastructure.out.security.jwt.configuration.JwtProperties;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.data.redis.core.RedisTemplate;
 
 @Configuration
 @RequiredArgsConstructor
@@ -85,6 +92,9 @@ public class BeanConfiguration {
     private final IOrderReportFeignClient orderReportFeignClient;
     private final IOrderReportFeignMapper orderReportFeignMapper;
 
+    private final IRestaurantCacheRepository restaurantCacheRepository;
+    private final IRestaurantCacheEntityMapper restaurantCacheEntityMapper;
+
     private final JwtProperties jwtProperties;
 
     @Bean
@@ -114,10 +124,26 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public IRestaurantServicePort restaurantServicePort(
-            ObjectMapper objectMapper
+    public IRestaurantCacheService restaurantCacheService(
+            ObjectMapper objectMapper,
+            RedisTemplate<String, Object> redisTemplate
     ) {
-        return new RestaurantUseCase(restaurantPersistencePort(), userValidationPort(objectMapper));
+        return new RestaurantCacheServiceImpl(
+                restaurantPersistencePort(),
+                restaurantCachePort(redisTemplate)
+        );
+    }
+
+    @Bean
+    public IRestaurantServicePort restaurantServicePort(
+            ObjectMapper objectMapper,
+            IRestaurantCacheService restaurantCacheService
+    ) {
+        return new RestaurantUseCase(
+                restaurantCacheService,
+                restaurantPersistencePort(),
+                userValidationPort(objectMapper)
+        );
     }
 
     @Bean
@@ -212,6 +238,17 @@ public class BeanConfiguration {
         return new OrderReportUseCase(
                 orderReportQueryPort(),
                 restaurantPersistencePort()
+        );
+    }
+
+    @Bean
+    public IRestaurantCachePort restaurantCachePort(
+            RedisTemplate<String, Object> redisTemplate
+    ) {
+        return new RestaurantCacheAdapter(
+                restaurantCacheRepository,
+                restaurantCacheEntityMapper,
+                redisTemplate
         );
     }
 }

@@ -6,6 +6,7 @@ import com.pragma.plazoleta.domain.enums.Roles;
 import com.pragma.plazoleta.domain.exception.restaurant.NitAlreadyExistsException;
 import com.pragma.plazoleta.domain.exception.restaurant.UserIsNotOwnerException;
 import com.pragma.plazoleta.domain.model.Restaurant;
+import com.pragma.plazoleta.domain.service.IRestaurantCacheService;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class RestaurantUseCase implements IRestaurantServicePort {
 
+    private final IRestaurantCacheService restaurantCacheService;
     private final IRestaurantPersistencePort restaurantPersistencePort;
     private final IUserInformationPort userInformationPort;
 
@@ -21,14 +23,14 @@ public class RestaurantUseCase implements IRestaurantServicePort {
         validateOwner(restaurant.getOwnerId());
         validateNitUniqueness(restaurant.getNit());
 
-        return restaurantPersistencePort.save(restaurant);
+        return restaurantCacheService.saveRestaurant(restaurant);
     }
 
     @Override
     public PagedResult<Restaurant> listRestaurants(Integer page, Integer size) {
         PagedResult.validatePagination(page, size);
 
-        return restaurantPersistencePort.findAllPaginatedByNameAsc(page, size);
+        return restaurantCacheService.listRestaurants(page, size);
     }
 
     private void validateOwner(Long ownerId) {
