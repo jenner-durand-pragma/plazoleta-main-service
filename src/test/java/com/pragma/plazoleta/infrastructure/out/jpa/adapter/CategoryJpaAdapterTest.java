@@ -47,4 +47,14 @@ class CategoryJpaAdapterTest {
         assertThat(categoryJpaAdapter.findById(saved.getId())).isNotNull();
         assertThat(categoryJpaAdapter.findById(10L)).isNull();
     }
+
+    @Test
+    @DisplayName("Should return category saved successfully")
+    void shouldReturnCategorySavedSuccessfully() {
+        var category = buildCategory();
+
+        var categorySaved = categoryJpaAdapter.save(category);
+
+        assertThat(categoryJpaAdapter.findById(categorySaved.getId())).isNotNull();
+    }
 }
