@@ -18,10 +18,15 @@ public class CategoryCacheAdapter implements ICategoryCachePort {
 
     @Override
     public Optional<Category> getCategoryById(Long id) {
-        return null;
+        return categoryCacheRepository.findById(id)
+                .map(categoryCacheEntityMapper::toModel);
     }
 
     @Override
     public void saveCategory(Category category) {
+        var categoryCache = categoryCacheEntityMapper.toEntity(category);
+        categoryCache.setTtl(TTL_INDIVIDUAL_SECONDS);
+
+        categoryCacheRepository.save(categoryCache);
     }
 }
