@@ -17,7 +17,6 @@ import org.springframework.context.annotation.Import;
 import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.testcontainers.junit.jupiter.Testcontainers;
 
 import java.io.IOException;
 import java.util.List;
@@ -26,7 +25,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SpringBootTest
-@Testcontainers
 @Import({
         IRestaurantCacheEntityMapperImpl.class
 })
