@@ -18,4 +18,11 @@ public class CategoryJpaAdapter implements ICategoryPersistencePort {
                 .map(categoryEntityMapper::toModel)
                 .orElse(null);
     }
+
+    @Override
+    public Category save(Category category) {
+        var categoryEntity = categoryEntityMapper.toEntity(category);
+
+        return categoryEntityMapper.toModel(categoryRepository.save(categoryEntity));
+    }
 }
