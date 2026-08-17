@@ -7,9 +7,15 @@ import com.pragma.plazoleta.domain.api.IOrderReportServicePort;
 import com.pragma.plazoleta.domain.api.IOrderServicePort;
 import com.pragma.plazoleta.domain.api.IOrderTraceabilityServicePort;
 import com.pragma.plazoleta.domain.api.IRestaurantServicePort;
+import com.pragma.plazoleta.domain.service.ICategoryCacheService;
+import com.pragma.plazoleta.domain.service.IDishCacheService;
 import com.pragma.plazoleta.domain.service.IRestaurantCacheService;
+import com.pragma.plazoleta.domain.service.impl.CategoryCacheServiceImpl;
+import com.pragma.plazoleta.domain.service.impl.DishCacheServiceImpl;
 import com.pragma.plazoleta.domain.service.impl.RestaurantCacheServiceImpl;
+import com.pragma.plazoleta.domain.spi.ICategoryCachePort;
 import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
+import com.pragma.plazoleta.domain.spi.IDishCachePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.domain.spi.IOrderPersistencePort;
@@ -52,8 +58,14 @@ import com.pragma.plazoleta.infrastructure.out.jpa.repository.IDishRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IOrderRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantEmployeeRepository;
 import com.pragma.plazoleta.infrastructure.out.jpa.repository.IRestaurantRepository;
+import com.pragma.plazoleta.infrastructure.out.redis.adapter.CategoryCacheAdapter;
+import com.pragma.plazoleta.infrastructure.out.redis.adapter.DishCacheAdapter;
 import com.pragma.plazoleta.infrastructure.out.redis.adapter.RestaurantCacheAdapter;
+import com.pragma.plazoleta.infrastructure.out.redis.mapper.ICategoryCacheEntityMapper;
+import com.pragma.plazoleta.infrastructure.out.redis.mapper.IDishCacheEntityMapper;
 import com.pragma.plazoleta.infrastructure.out.redis.mapper.IRestaurantCacheEntityMapper;
+import com.pragma.plazoleta.infrastructure.out.redis.repository.ICategoryCacheRepository;
+import com.pragma.plazoleta.infrastructure.out.redis.repository.IDishCacheRepository;
 import com.pragma.plazoleta.infrastructure.out.redis.repository.IRestaurantCacheRepository;
 import com.pragma.plazoleta.infrastructure.out.security.jwt.JwtAdapter;
 import com.pragma.plazoleta.infrastructure.out.security.jwt.configuration.JwtProperties;
@@ -95,6 +107,12 @@ public class BeanConfiguration {
     private final IRestaurantCacheRepository restaurantCacheRepository;
     private final IRestaurantCacheEntityMapper restaurantCacheEntityMapper;
 
+    private final ICategoryCacheRepository categoryCacheRepository;
+    private final ICategoryCacheEntityMapper categoryCacheEntityMapper;
+
+    private final IDishCacheRepository dishCacheRepository;
+    private final IDishCacheEntityMapper dishCacheEntityMapper;
+
     private final JwtProperties jwtProperties;
 
     @Bean
@@ -125,12 +143,31 @@ public class BeanConfiguration {
 
     @Bean
     public IRestaurantCacheService restaurantCacheService(
-            ObjectMapper objectMapper,
             RedisTemplate<String, Object> redisTemplate
     ) {
         return new RestaurantCacheServiceImpl(
                 restaurantPersistencePort(),
                 restaurantCachePort(redisTemplate)
+        );
+    }
+
+    @Bean
+    public ICategoryCacheService categoryCacheService() {
+        return new CategoryCacheServiceImpl(
+                categoryCachePort(),
+                categoryPersistencePort()
+        );
+    }
+
+    @Bean
+    public IDishCacheService dishCacheService(
+            RedisTemplate<String, Object> redisTemplate
+    ) {
+        return new DishCacheServiceImpl(
+                dishCachePort(redisTemplate),
+                dishPersistencePort(),
+                categoryCacheService(),
+                restaurantCacheService(redisTemplate)
         );
     }
 
@@ -147,8 +184,16 @@ public class BeanConfiguration {
     }
 
     @Bean
-    public IDishServicePort dishServicePort() {
-        return new DishUseCase(dishPersistencePort(), restaurantPersistencePort(), categoryPersistencePort());
+    public IDishServicePort dishServicePort(
+            IRestaurantCacheService restaurantCacheService,
+            ICategoryCacheService categoryCacheService,
+            IDishCacheService dishCacheService
+    ) {
+        return new DishUseCase(
+                dishCacheService,
+                restaurantCacheService,
+                categoryCacheService
+        );
     }
 
     @Bean
@@ -248,6 +293,25 @@ public class BeanConfiguration {
         return new RestaurantCacheAdapter(
                 restaurantCacheRepository,
                 restaurantCacheEntityMapper,
+                redisTemplate
+        );
+    }
+
+    @Bean
+    public ICategoryCachePort categoryCachePort() {
+        return new CategoryCacheAdapter(
+                categoryCacheRepository,
+                categoryCacheEntityMapper
+        );
+    }
+
+    @Bean
+    public IDishCachePort dishCachePort(
+            RedisTemplate<String, Object> redisTemplate
+    ) {
+        return new DishCacheAdapter(
+                dishCacheRepository,
+                dishCacheEntityMapper,
                 redisTemplate
         );
     }

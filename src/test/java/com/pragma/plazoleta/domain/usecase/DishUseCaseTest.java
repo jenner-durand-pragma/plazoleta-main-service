@@ -9,6 +9,9 @@ import com.pragma.plazoleta.domain.exception.restaurant.RestaurantOwnershipExcep
 import com.pragma.plazoleta.domain.model.Category;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Restaurant;
+import com.pragma.plazoleta.domain.service.ICategoryCacheService;
+import com.pragma.plazoleta.domain.service.IDishCacheService;
+import com.pragma.plazoleta.domain.service.IRestaurantCacheService;
 import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
@@ -35,13 +38,13 @@ import static org.mockito.Mockito.when;
 class DishUseCaseTest {
 
     @Mock
-    private IDishPersistencePort dishPersistencePort;
+    private IDishCacheService dishCacheService;
 
     @Mock
-    private IRestaurantPersistencePort restaurantPersistencePort;
+    private IRestaurantCacheService restaurantCacheService;
 
     @Mock
-    private ICategoryPersistencePort categoryPersistencePort;
+    private ICategoryCacheService categoryCacheService;
 
     @InjectMocks
     private DishUseCase dishUseCase;
@@ -80,17 +83,17 @@ class DishUseCaseTest {
     @Test
     @DisplayName("Should create a dish and set active 'true' by default")
     void shouldCreateDishAndDefaultActiveTrue() {
-        when(categoryPersistencePort.findById(1L))
+        when(categoryCacheService.getCategoryById(1L))
                 .thenReturn(mainCourse);
-        when(restaurantPersistencePort.findById(10L))
+        when(restaurantCacheService.getRestaurantById(10L))
                 .thenReturn(restaurant);
-        when(dishPersistencePort.save(any(Dish.class)))
+        when(dishCacheService.saveDish(any(Dish.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         var result = dishUseCase.createDish(validDish, OWNER_ID);
 
         var captor = ArgumentCaptor.forClass(Dish.class);
-        verify(dishPersistencePort).save(captor.capture());
+        verify(dishCacheService).saveDish(captor.capture());
 
         assertThat(captor.getValue().getActive()).isTrue();
         assertThat(result.getActive()).isTrue();
@@ -101,24 +104,24 @@ class DishUseCaseTest {
     @Test
     @DisplayName("Should throw CategoryNotFoundException when category does not exist")
     void shouldThrowWhenCategoryDoesNotExistInCreateDish() {
-        when(categoryPersistencePort.findById(1L)).thenReturn(null);
+        when(categoryCacheService.getCategoryById(1L)).thenReturn(null);
 
         assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
                 .isInstanceOf(CategoryNotFoundException.class);
 
-        verify(dishPersistencePort, never()).save(any(Dish.class));
+        verify(dishCacheService, never()).saveDish(any(Dish.class));
     }
 
     @Test
     @DisplayName("Should throw RestaurantNotFoundException when restaurant does not exist")
     void shouldThrowWhenRestaurantDoesNotExistInCreateDish() {
-        when(categoryPersistencePort.findById(1L)).thenReturn(mainCourse);
-        when(restaurantPersistencePort.findById(10L)).thenReturn(null);
+        when(categoryCacheService.getCategoryById(1L)).thenReturn(mainCourse);
+        when(restaurantCacheService.getRestaurantById(10L)).thenReturn(null);
 
         assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
                 .isInstanceOf(RestaurantNotFoundException.class);
 
-        verify(dishPersistencePort, never()).save(any(Dish.class));
+        verify(dishCacheService, never()).saveDish(any(Dish.class));
     }
 
     @Test
@@ -128,13 +131,13 @@ class DishUseCaseTest {
         otherOwnerRestaurant.setId(10L);
         otherOwnerRestaurant.setOwnerId(99L);
 
-        when(categoryPersistencePort.findById(1L)).thenReturn(mainCourse);
-        when(restaurantPersistencePort.findById(10L)).thenReturn(otherOwnerRestaurant);
+        when(categoryCacheService.getCategoryById(1L)).thenReturn(mainCourse);
+        when(restaurantCacheService.getRestaurantById(10L)).thenReturn(otherOwnerRestaurant);
 
         assertThatThrownBy(() -> dishUseCase.createDish(validDish, OWNER_ID))
                 .isInstanceOf(RestaurantOwnershipException.class);
 
-        verify(dishPersistencePort, never()).save(any(Dish.class));
+        verify(dishCacheService, never()).saveDish(any(Dish.class));
     }
 
     @Test
@@ -142,9 +145,9 @@ class DishUseCaseTest {
     void shouldUpdateDishPriceAndDescription() {
         validDish.setActive(true);
 
-        when(dishPersistencePort.findById(1L))
+        when(dishCacheService.getDishById(1L))
                 .thenReturn(validDish);
-        when(dishPersistencePort.save(any(Dish.class)))
+        when(dishCacheService.saveDish(any(Dish.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         var result = dishUseCase.updateDish(
@@ -155,7 +158,7 @@ class DishUseCaseTest {
         );
 
         var captor = ArgumentCaptor.forClass(Dish.class);
-        verify(dishPersistencePort).save(captor.capture());
+        verify(dishCacheService).saveDish(captor.capture());
         var persisted = captor.getValue();
 
         assertThat(persisted.getPrice()).isEqualTo(20000);
@@ -174,38 +177,38 @@ class DishUseCaseTest {
     @Test
     @DisplayName("Should throw DishNotFoundException when the dish does not exist")
     void shouldThrowWhenDishDoesNotExistInUpdateDish() {
-        when(dishPersistencePort.findById(1L)).thenReturn(null);
+        when(dishCacheService.getDishById(1L)).thenReturn(null);
 
         assertThatThrownBy(() ->
                 dishUseCase.updateDish(1L, 20000, "Updated", OWNER_ID))
                 .isInstanceOf(DishNotFoundException.class);
 
-        verify(dishPersistencePort, never()).save(any(Dish.class));
+        verify(dishCacheService, never()).saveDish(any(Dish.class));
     }
 
     @Test
     @DisplayName("Should throw DishOwnershipException when caller is not the restaurant owner")
     void shouldThrowWhenCallerIsNotTheOwnerInUpdateDish() {
-        when(dishPersistencePort.findById(1L)).thenReturn(validDish);
+        when(dishCacheService.getDishById(1L)).thenReturn(validDish);
 
         assertThatThrownBy(() ->
                 dishUseCase.updateDish(1L, 20000, "Updated", 999L))
                 .isInstanceOf(RestaurantOwnershipException.class);
 
-        verify(dishPersistencePort, never()).save(any(Dish.class));
+        verify(dishCacheService, never()).saveDish(any(Dish.class));
     }
 
     @Test
     @DisplayName("Should update only price when description is null")
     void shouldUpdateOnlyPriceWhenDescriptionIsNullInUpdateDish() {
-        when(dishPersistencePort.findById(1L)).thenReturn(validDish);
-        when(dishPersistencePort.save(any(Dish.class)))
+        when(dishCacheService.getDishById(1L)).thenReturn(validDish);
+        when(dishCacheService.saveDish(any(Dish.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         dishUseCase.updateDish(1L, 25000, null, OWNER_ID);
 
         var captor = ArgumentCaptor.forClass(Dish.class);
-        verify(dishPersistencePort).save(captor.capture());
+        verify(dishCacheService).saveDish(captor.capture());
         var persisted = captor.getValue();
 
         assertThat(persisted.getPrice()).isEqualTo(25000);
@@ -218,14 +221,14 @@ class DishUseCaseTest {
     @Test
     @DisplayName("Should update only description when price is null")
     void shouldUpdateOnlyDescriptionWhenPriceIsNullInUpdateDish() {
-        when(dishPersistencePort.findById(1L)).thenReturn(validDish);
-        when(dishPersistencePort.save(any(Dish.class)))
+        when(dishCacheService.getDishById(1L)).thenReturn(validDish);
+        when(dishCacheService.saveDish(any(Dish.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         dishUseCase.updateDish(1L, null, "Brand new description", OWNER_ID);
 
         var captor = ArgumentCaptor.forClass(Dish.class);
-        verify(dishPersistencePort).save(captor.capture());
+        verify(dishCacheService).saveDish(captor.capture());
         var persisted = captor.getValue();
 
         assertThat(persisted.getPrice()).isEqualTo(15000);
@@ -235,14 +238,14 @@ class DishUseCaseTest {
     @Test
     @DisplayName("Should disable dish when caller is the owner")
     void shouldDisableDish() {
-        when(dishPersistencePort.findById(validDish.getId())).thenReturn(validDish);
-        when(dishPersistencePort.save(any(Dish.class)))
+        when(dishCacheService.getDishById(validDish.getId())).thenReturn(validDish);
+        when(dishCacheService.saveDish(any(Dish.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         var result = dishUseCase.updateDishStatus(validDish.getId(), false, OWNER_ID);
 
         var captor = ArgumentCaptor.forClass(Dish.class);
-        verify(dishPersistencePort).save(captor.capture());
+        verify(dishCacheService).saveDish(captor.capture());
 
         assertThat(captor.getValue().getActive()).isFalse();
         assertThat(result.getActive()).isFalse();
@@ -253,8 +256,8 @@ class DishUseCaseTest {
     void shouldEnableDish() {
         validDish.setActive(false);
 
-        when(dishPersistencePort.findById(validDish.getId())).thenReturn(validDish);
-        when(dishPersistencePort.save(any(Dish.class)))
+        when(dishCacheService.getDishById(validDish.getId())).thenReturn(validDish);
+        when(dishCacheService.saveDish(any(Dish.class)))
                 .thenAnswer(inv -> inv.getArgument(0));
 
         var result = dishUseCase.updateDishStatus(validDish.getId(), true, OWNER_ID);
@@ -267,9 +270,9 @@ class DishUseCaseTest {
     void shouldReturnPaginatedDishesFilteredWhenDataIsValidInListDishesByRestaurant() {
         var paged = PagedResult.of(List.of(validDish), 0, 10, 1L, 1);
 
-        when(restaurantPersistencePort.findById(restaurant.getId()))
+        when(restaurantCacheService.getRestaurantById(restaurant.getId()))
                 .thenReturn(restaurant);
-        when(dishPersistencePort.findActiveByRestaurantAndCategoryPaginated(
+        when(dishCacheService.listDishes(
                 restaurant.getId(), mainCourse.getId(), 0, 10)
         ).thenReturn(paged);
 
@@ -282,7 +285,7 @@ class DishUseCaseTest {
     @Test
     @DisplayName("Should throw RestaurantNotFoundException when restaurant does not exist in list dishes by restaurant")
     void shouldThrowRestaurantNotFoundExceptionWhenRestaurantDoesNotExistInListDishesByRestaurant() {
-        when(restaurantPersistencePort.findById(10L)).thenReturn(null);
+        when(restaurantCacheService.getRestaurantById(10L)).thenReturn(null);
 
         assertThatThrownBy(() -> dishUseCase.listDishesByRestaurant(
                 10L,
@@ -291,8 +294,8 @@ class DishUseCaseTest {
                 10)
         ).isInstanceOf(RestaurantNotFoundException.class);
 
-        verify(dishPersistencePort, never())
-                .findActiveByRestaurantAndCategoryPaginated(any(), any(), anyInt(), anyInt());
+        verify(dishCacheService, never())
+                .listDishes(any(), any(), anyInt(), anyInt());
     }
 
     @Test
@@ -301,7 +304,7 @@ class DishUseCaseTest {
         assertThatThrownBy(() -> dishUseCase.listDishesByRestaurant(10L, null, -1, 10))
                 .isInstanceOf(InvalidPaginationException.class);
 
-        verify(restaurantPersistencePort, never()).findById(any());
+        verify(restaurantCacheService, never()).getRestaurantById(any());
     }
 
     @Test

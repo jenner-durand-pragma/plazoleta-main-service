@@ -8,7 +8,11 @@ import com.pragma.plazoleta.domain.exception.restaurant.RestaurantNotFoundExcept
 import com.pragma.plazoleta.domain.model.Category;
 import com.pragma.plazoleta.domain.model.Dish;
 import com.pragma.plazoleta.domain.model.Restaurant;
+import com.pragma.plazoleta.domain.service.ICategoryCacheService;
+import com.pragma.plazoleta.domain.service.IDishCacheService;
+import com.pragma.plazoleta.domain.service.IRestaurantCacheService;
 import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
+import com.pragma.plazoleta.domain.spi.IDishCachePort;
 import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
 import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import lombok.RequiredArgsConstructor;
@@ -16,9 +20,9 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class DishUseCase implements IDishServicePort {
 
-    private final IDishPersistencePort dishPersistencePort;
-    private final IRestaurantPersistencePort restaurantPersistencePort;
-    private final ICategoryPersistencePort categoryPersistencePort;
+    private final IDishCacheService dishCacheService;
+    private final IRestaurantCacheService restaurantCacheService;
+    private final ICategoryCacheService categoryCacheService;
 
     @Override
     public Dish createDish(Dish dish, Long ownerId) {
@@ -30,7 +34,7 @@ public class DishUseCase implements IDishServicePort {
         dish.setRestaurant(restaurant);
         dish.setActive(true);
 
-        return dishPersistencePort.save(dish);
+        return dishCacheService.saveDish(dish);
     }
 
     @Override
@@ -46,7 +50,7 @@ public class DishUseCase implements IDishServicePort {
             dish.setDescription(description);
         }
 
-        return dishPersistencePort.save(dish);
+        return dishCacheService.saveDish(dish);
     }
 
     @Override
@@ -56,7 +60,7 @@ public class DishUseCase implements IDishServicePort {
         dish.getRestaurant().checkOwnership(ownerId);
         dish.setActive(active);
 
-        return dishPersistencePort.save(dish);
+        return dishCacheService.saveDish(dish);
     }
 
     @Override
@@ -65,7 +69,7 @@ public class DishUseCase implements IDishServicePort {
 
         var restaurant = resolveRestaurant(restaurantId);
 
-        return dishPersistencePort.findActiveByRestaurantAndCategoryPaginated(
+        return dishCacheService.listDishes(
                 restaurant.getId(),
                 categoryId,
                 page,
@@ -74,7 +78,7 @@ public class DishUseCase implements IDishServicePort {
     }
 
     private Category resolveCategory(Long categoryId) {
-        var category = categoryPersistencePort.findById(categoryId);
+        var category = categoryCacheService.getCategoryById(categoryId);
         if (category == null) {
             throw new CategoryNotFoundException(categoryId);
         }
@@ -83,7 +87,7 @@ public class DishUseCase implements IDishServicePort {
     }
 
     private Restaurant resolveRestaurant(Long restaurantId) {
-        var restaurant = restaurantPersistencePort.findById(restaurantId);
+        var restaurant = restaurantCacheService.getRestaurantById(restaurantId);
         if (restaurant == null) {
             throw new RestaurantNotFoundException(restaurantId);
         }
@@ -92,7 +96,7 @@ public class DishUseCase implements IDishServicePort {
     }
 
     private Dish resolveDish(Long dishId) {
-        var dish = dishPersistencePort.findById(dishId);
+        var dish = dishCacheService.getDishById(dishId);
         if (dish == null) {
             throw new DishNotFoundException(dishId);
         }
