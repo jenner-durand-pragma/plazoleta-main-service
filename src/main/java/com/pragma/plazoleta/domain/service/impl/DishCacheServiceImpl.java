@@ -37,7 +37,7 @@ public class DishCacheServiceImpl implements IDishCacheService {
     public Dish saveDish(Dish dish) {
         var dishSaved = dishPersistencePort.save(dish);
         dishCachePort.saveDish(dishSaved);
-        dishCachePort.deleteDishPagesCached();
+        dishCachePort.deleteDishPagesCached(dishSaved.getRestaurant().getId());
 
         return dishSaved;
     }

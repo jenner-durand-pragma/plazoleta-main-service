@@ -13,5 +13,5 @@ public interface IDishCachePort {
     Optional<PagedResult<Dish>> getDishList(Long restaurantId, Long categoryId, Integer page, Integer size);
     void saveDishList(Long restaurantId, Long categoryId, Integer page, Integer size, PagedResult<Dish> list);
 
-    void deleteDishPagesCached();
+    void deleteDishPagesCached(Long restaurantId);
 }

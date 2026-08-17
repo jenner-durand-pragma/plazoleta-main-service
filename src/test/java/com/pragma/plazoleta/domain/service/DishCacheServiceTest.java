@@ -144,7 +144,7 @@ class DishCacheServiceTest {
         assertNotNull(dishReturned);
         assertEquals(dishId, dishReturned.getId());
         verify(dishCachePort).saveDish(dishReturned);
-        verify(dishCachePort).deleteDishPagesCached();
+        verify(dishCachePort).deleteDishPagesCached(5L);
     }
 
     @ParameterizedTest

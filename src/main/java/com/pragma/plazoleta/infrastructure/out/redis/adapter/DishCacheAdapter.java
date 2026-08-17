@@ -64,8 +64,8 @@ public class DishCacheAdapter implements IDishCachePort {
     }
 
     @Override
-    public void deleteDishPagesCached() {
-        var keys = redisTemplate.keys(LIST_KEY_PREFIX + "*");
+    public void deleteDishPagesCached(Long restaurantId) {
+        var keys = redisTemplate.keys(LIST_KEY_PREFIX + restaurantId + "-*");
 
         if (!keys.isEmpty()) {
             redisTemplate.delete(keys);

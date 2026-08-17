@@ -168,7 +168,7 @@ class DishCacheAdapterTest {
 
         dishCacheAdapter.saveDishList(2L, 1L, pageNumber, pageSize, dishPagedResult);
 
-        dishCacheAdapter.deleteDishPagesCached();
+        dishCacheAdapter.deleteDishPagesCached(2L);
 
         var dishPagedResultCached = dishCacheAdapter.getDishList(2L, 1L, pageNumber, pageSize);
 
