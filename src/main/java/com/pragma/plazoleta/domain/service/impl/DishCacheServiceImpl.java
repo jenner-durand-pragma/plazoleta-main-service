@@ -21,7 +21,12 @@ public class DishCacheServiceImpl implements IDishCacheService {
     @Override
     public Dish getDishById(Long id) {
         var dish = dishCachePort.getDishById(id)
-                .orElseGet(() -> dishPersistencePort.findById(id));
+                .orElseGet(() -> {
+                    var dishFresh = dishPersistencePort.findById(id);
+                    dishCachePort.saveDish(dishFresh);
+
+                    return dishFresh;
+                });
         dish.setRestaurant(restaurantCacheService.getRestaurantById(dish.getRestaurant().getId()));
         dish.setCategory(categoryCacheService.getCategoryById(dish.getCategory().getId()));
 
@@ -40,11 +45,16 @@ public class DishCacheServiceImpl implements IDishCacheService {
     @Override
     public PagedResult<Dish> listDishes(Long restaurantId, Long categoryId, Integer page, Integer size) {
         return dishCachePort.getDishList(restaurantId, categoryId, page, size)
-                .orElseGet(() -> dishPersistencePort.findActiveByRestaurantAndCategoryPaginated(
-                        restaurantId,
-                        categoryId,
-                        page,
-                        size
-                ));
+                .orElseGet(() -> {
+                    var dishPaged = dishPersistencePort.findActiveByRestaurantAndCategoryPaginated(
+                            restaurantId,
+                            categoryId,
+                            page,
+                            size
+                    );
+                    dishCachePort.saveDishList(restaurantId, categoryId, page, size, dishPaged);
+
+                    return dishPaged;
+                });
     }
 }
