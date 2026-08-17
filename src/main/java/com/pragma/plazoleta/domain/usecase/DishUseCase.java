@@ -11,10 +11,6 @@ import com.pragma.plazoleta.domain.model.Restaurant;
 import com.pragma.plazoleta.domain.service.ICategoryCacheService;
 import com.pragma.plazoleta.domain.service.IDishCacheService;
 import com.pragma.plazoleta.domain.service.IRestaurantCacheService;
-import com.pragma.plazoleta.domain.spi.ICategoryPersistencePort;
-import com.pragma.plazoleta.domain.spi.IDishCachePort;
-import com.pragma.plazoleta.domain.spi.IDishPersistencePort;
-import com.pragma.plazoleta.domain.spi.IRestaurantPersistencePort;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

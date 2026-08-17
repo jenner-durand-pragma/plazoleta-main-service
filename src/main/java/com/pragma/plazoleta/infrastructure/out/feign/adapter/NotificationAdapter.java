@@ -1,6 +1,5 @@
 package com.pragma.plazoleta.infrastructure.out.feign.adapter;
 
-import com.pragma.plazoleta.domain.exception.order.OrderCannotBeCancelledException;
 import com.pragma.plazoleta.domain.model.Order;
 import com.pragma.plazoleta.domain.spi.INotificationPort;
 import com.pragma.plazoleta.infrastructure.out.feign.client.INotificationFeignClient;

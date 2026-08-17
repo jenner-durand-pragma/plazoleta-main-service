@@ -2,7 +2,6 @@ package com.pragma.plazoleta.infrastructure.out.feign.adapter;
 
 import com.pragma.plazoleta.domain.enums.OrderStatus;
 import com.pragma.plazoleta.domain.model.OrderState;
-import com.pragma.plazoleta.domain.model.OrderTraceability;
 import com.pragma.plazoleta.domain.model.UserInformation;
 import com.pragma.plazoleta.domain.spi.IUserInformationPort;
 import com.pragma.plazoleta.infrastructure.out.feign.client.IOrderTraceabilityFeignClient;
